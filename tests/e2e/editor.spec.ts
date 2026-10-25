@@ -12,8 +12,24 @@ async function startOrCheckUnsupported(page: Page) {
   return supported;
 }
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window as typeof window & { __audioContexts: number };
+    state.__audioContexts = 0;
+    if (typeof AudioContext === 'function')
+      window.AudioContext = new Proxy(AudioContext, {
+        construct(target, args) {
+          state.__audioContexts++;
+          return Reflect.construct(target, args);
+        },
+      });
+  });
   await page.goto('./');
   await expect(page.getByRole('heading', { name: /Всё начинается/ })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (window as typeof window & { __audioContexts: number }).__audioContexts,
+    ),
+  ).toBe(0);
 });
 test('edit fine notes, dynamics, undo and restore across reload', async ({ page }) => {
   page.on('dialog', (d) => d.accept());
