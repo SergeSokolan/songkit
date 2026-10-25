@@ -52,4 +52,30 @@ describe('autosave lifecycle', () => {
     });
     expect(result.current.status).toBe('Черновик на устройстве');
   });
+
+  it('does not acknowledge an older write as the newest saved revision', async () => {
+    let release!: () => void;
+    vi.mocked(saveDraft).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const { result, rerender } = renderHook(({ value }) => useAutosave(value, true), {
+      initialProps: { value: draft },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    rerender({ value: { ...draft, pattern: { ...draft.pattern, tempo: 120 } } });
+    await act(async () => {
+      release();
+    });
+    expect(result.current.status).toBe('Сохранение…');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    expect(result.current.status).toBe('Черновик на устройстве');
+    expect(vi.mocked(saveDraft).mock.calls.at(-1)?.[0].pattern.tempo).toBe(120);
+  });
 });

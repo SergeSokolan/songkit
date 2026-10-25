@@ -41,21 +41,24 @@ test('edit fine notes, dynamics, undo and restore across reload', async ({ page 
     .poll(async () =>
       page.evaluate(
         async () =>
-          new Promise<number>((resolve) => {
+          new Promise<{ velocity: number; grid: number }>((resolve) => {
             const r = indexedDB.open('songkit', 1);
             r.onsuccess = () => {
               const db = r.result,
                 tx = db.transaction('drafts'),
                 q = tx.objectStore('drafts').get('current');
               q.onsuccess = () => {
-                resolve(q.result?.pattern?.events?.[0]?.velocity ?? 0);
+                resolve({
+                  velocity: q.result?.pattern?.events?.[0]?.velocity ?? 0,
+                  grid: q.result?.view?.grid ?? 0,
+                });
                 db.close();
               };
             };
           }),
       ),
     )
-    .toBe(35);
+    .toEqual({ velocity: 35, grid: 32 });
   await page.reload();
   await expect(
     page.getByRole('button', { name: 'Малый, такт 1, шаг 2, Тихий', exact: true }),

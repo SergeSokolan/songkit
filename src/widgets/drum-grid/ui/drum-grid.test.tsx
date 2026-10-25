@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createPattern, setHit } from '../../../entities/drum-pattern';
 import { DrumGrid } from './drum-grid';
 afterEach(() => {
@@ -46,5 +46,21 @@ describe('drum grid interactions', () => {
     expect(
       screen.getByRole('button', { name: /Малый, такт 1, шаг 1, пусто, есть удары/ }),
     ).toBeTruthy();
+  });
+
+  it('long press opens dynamics and suppresses the following toggle', () => {
+    vi.useFakeTimers();
+    const p = props();
+    render(<DrumGrid {...p} />);
+    const cell = screen.getByRole('button', { name: 'Малый, такт 1, шаг 2, пусто' });
+    fireEvent.pointerDown(cell, { button: 0, pointerType: 'touch' });
+    act(() => {
+      vi.advanceTimersByTime(450);
+    });
+    expect(screen.getByRole('dialog', { name: 'Сила удара' })).toBeVisible();
+    fireEvent.click(cell);
+    expect(p.onHit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Тихий, сила 35' }));
+    expect(p.onHit).toHaveBeenCalledExactlyOnceWith('snare', 480, 35);
   });
 });

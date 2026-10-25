@@ -6,6 +6,7 @@ export function useAutosave(draft: Draft, enabled: boolean) {
   const queue = useRef(Promise.resolve());
   const latest = useRef(draft);
   const mounted = useRef(true);
+  const revision = useRef(0);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -19,13 +20,16 @@ export function useAutosave(draft: Draft, enabled: boolean) {
     (snapshot?: Draft) => {
       if (!enabled) return;
       const current = snapshot ?? latest.current;
+      const savedRevision = revision.current;
       queue.current = queue.current.catch(() => {}).then(() => saveDraft(current));
       queue.current.then(
         () => {
-          if (mounted.current) setStatus('Черновик на устройстве');
+          if (mounted.current && savedRevision === revision.current)
+            setStatus('Черновик на устройстве');
         },
         () => {
-          if (mounted.current) setStatus('Не удалось сохранить. Скачайте проект.');
+          if (mounted.current && savedRevision === revision.current)
+            setStatus('Не удалось сохранить. Скачайте проект.');
         },
       );
     },
@@ -33,6 +37,8 @@ export function useAutosave(draft: Draft, enabled: boolean) {
   );
   useEffect(() => {
     if (!enabled) return;
+    revision.current++;
+    setStatus('Сохранение…');
     const timer = setTimeout(() => flush(), 150);
     const hide = () => {
       if (document.hidden) flush();
