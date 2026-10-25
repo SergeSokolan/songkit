@@ -26,7 +26,7 @@ export class Scheduler {
   private position = 0;
   constructor(
     private driver: AudioDriver,
-    private getPattern: () => Pattern,
+    private getPattern: (tick?: number) => Pattern,
   ) {}
   start(position = 0): void {
     if (this.running) return;
@@ -48,7 +48,7 @@ export class Scheduler {
       return;
     }
     while (this.nextTime < now + this.lookAhead) {
-      const pattern = this.getPattern();
+      const pattern = this.getPattern(this.tick);
       if (this.tick % PPQ === 0) this.tempo = pattern.tempo;
       if (this.tick % BAR_TICKS === 0) {
         this.length = totalTicks(pattern);

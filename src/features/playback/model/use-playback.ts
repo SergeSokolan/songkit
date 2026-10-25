@@ -1,3 +1,4 @@
+import { AuditionSelector, type Audition } from './audition';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Pattern, DrumEvent } from '../../../entities/drum-pattern';
 import { DrumAudio } from './drum-audio';
@@ -6,11 +7,16 @@ export function usePlayback(
   pattern: Pattern,
   initialPosition: number,
   onPause: (tick: number) => void,
+  audition?: Audition,
 ) {
   const patternRef = useRef(pattern);
+  const auditionRef = useRef(audition);
+  const activeAudition = useRef(new AuditionSelector());
   const pauseRef = useRef(onPause);
   useEffect(() => {
     patternRef.current = pattern;
+    auditionRef.current = audition;
+    if (!audition) activeAudition.current.reset();
     pauseRef.current = onPause;
   });
   const audioRef = useRef<DrumAudio | null>(null);
@@ -24,6 +30,7 @@ export function usePlayback(
   const [soundTested, setSoundTested] = useState(false);
   const stop = useCallback(() => {
     requestRef.current++;
+    activeAudition.current.reset();
     const tick = schedulerRef.current?.stop() ?? positionRef.current;
     audioRef.current?.silence();
     positionRef.current = tick;
@@ -77,7 +84,9 @@ export function usePlayback(
       audioRef.current.onSuspend = stop;
       await audioRef.current.prepare();
       if (request !== requestRef.current || document.hidden) return;
-      schedulerRef.current ??= new Scheduler(audioRef.current, () => patternRef.current);
+      schedulerRef.current ??= new Scheduler(audioRef.current, (tick) => {
+        return activeAudition.current.resolve(patternRef.current, auditionRef.current, tick);
+      });
       schedulerRef.current.start(positionRef.current);
       setPlaying(true);
     } catch (e) {

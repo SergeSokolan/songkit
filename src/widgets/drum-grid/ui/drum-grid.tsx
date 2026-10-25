@@ -21,6 +21,7 @@ interface Selection {
 }
 interface Props {
   pattern: Pattern;
+  fillRange?: { start: number; end: number; tracks: Instrument[] };
   bar: number;
   grid: Grid;
   position: number;
@@ -32,6 +33,7 @@ interface Props {
 }
 export function DrumGrid({
   pattern,
+  fillRange,
   bar,
   grid,
   position,
@@ -208,7 +210,7 @@ export function DrumGrid({
                       data-cell="true"
                       data-instrument={instrument}
                       data-tick={tick}
-                      className={`step ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (grid / 4) === 0 ? 'downbeat' : ''}`}
+                      className={`step ${fillRange && tick >= fillRange.start && tick < fillRange.end && fillRange.tracks.includes(instrument) ? 'fill-selected' : ''} ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (grid / 4) === 0 ? 'downbeat' : ''}`}
                       aria-label={`${INSTRUMENT_DETAILS[instrument].name}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
                       aria-pressed={!!hit}
                       onPointerDown={(e) => pointerDown(e, instrument, tick, !!hit)}

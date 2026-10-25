@@ -1,3 +1,4 @@
+import { TempoControl } from './tempo-control';
 import { Icon } from '../../../shared/ui/icon';
 interface Props {
   tempo: number;
@@ -19,31 +20,7 @@ export function TransportPanel({
 }: Props) {
   return (
     <section className="transport" aria-label="Воспроизведение">
-      <div className="tempo-control">
-        <span className="eyebrow">ТЕМП</span>
-        <div className="tempo-value">
-          <input
-            aria-label="Темп BPM"
-            type="number"
-            min="40"
-            max="240"
-            value={tempo}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              if (Number.isInteger(value) && value >= 40 && value <= 240) onTempo(value);
-            }}
-          />
-          <span>BPM</span>
-        </div>
-        <input
-          aria-label="Скорость"
-          type="range"
-          min="40"
-          max="240"
-          value={tempo}
-          onChange={(e) => onTempo(Number(e.target.value))}
-        />
-      </div>
+      <TempoControl tempo={tempo} onTempo={onTempo} />
       <div className="meter">
         <span className="eyebrow">РАЗМЕР</span>
         <strong>

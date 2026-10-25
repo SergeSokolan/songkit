@@ -1,3 +1,5 @@
+export const MIN_TEMPO = 40;
+export const MAX_TEMPO = 240;
 export const PPQ = 960;
 export const BAR_TICKS = PPQ * 4;
 // Physical height, bottom to top. DOM display reverses this order.
@@ -133,7 +135,8 @@ export function resizePattern(pattern: Pattern, barCount: number): Pattern {
   };
 }
 export function setTempo(pattern: Pattern, tempo: number): Pattern {
-  if (!Number.isInteger(tempo) || tempo < 40 || tempo > 240) throw new Error('Темп от 40 до 240');
+  if (!Number.isInteger(tempo) || tempo < MIN_TEMPO || tempo > MAX_TEMPO)
+    throw new Error('Темп от 40 до 240');
   return { ...pattern, tempo };
 }
 export function demoPattern(): Pattern {
@@ -153,8 +156,8 @@ export function parsePattern(value: unknown): Pattern {
     p.timeSignature[0] !== 4 ||
     p.timeSignature[1] !== 4 ||
     !Number.isInteger(p.tempo) ||
-    Number(p.tempo) < 40 ||
-    Number(p.tempo) > 240 ||
+    Number(p.tempo) < MIN_TEMPO ||
+    Number(p.tempo) > MAX_TEMPO ||
     !Number.isInteger(p.barCount) ||
     Number(p.barCount) < 1 ||
     Number(p.barCount) > 4 ||
