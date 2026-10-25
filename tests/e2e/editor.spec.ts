@@ -262,3 +262,56 @@ test('adds a cymbal while the loop keeps playing', async ({ page }) => {
     await page.getByRole('button', { name: 'Пауза', exact: true }).click();
   }
 });
+
+test('shows the GitHub source link and release version', async ({ page }) => {
+  const link = page.getByRole('link', { name: 'Исходный код SongKit на GitHub' });
+  await expect(link).toHaveAttribute('href', 'https://github.com/SergeSokolan/songkit');
+  await expect(link).toHaveAttribute('target', '_blank');
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(page.locator('.app-version')).toHaveText('v0.2.1');
+});
+
+test('requests music playback routing and can restore sound without changing the groove', async ({
+  page,
+}, testInfo) => {
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'audioSession', {
+      configurable: true,
+      value: { type: 'auto' },
+    });
+  });
+  const notes = await page
+    .locator('.step[aria-pressed=true]')
+    .evaluateAll((elements) => elements.map((el) => el.getAttribute('aria-label')));
+  const supported = await startOrCheckUnsupported(page);
+  if (supported) {
+    expect(
+      await page.evaluate(
+        () => (navigator as Navigator & { audioSession: { type: string } }).audioSession.type,
+      ),
+    ).toBe('playback');
+    await page.getByRole('button', { name: 'Пауза', exact: true }).click();
+  }
+  if (testInfo.project.name === 'webkit-mobile')
+    await expect(
+      page.getByText('Если на iPhone нет звука, проверьте беззвучный режим и громкость медиа.'),
+    ).toBeVisible();
+  await page.getByText('Нет звука?', { exact: true }).click();
+  await page.getByRole('button', { name: 'Восстановить звук', exact: true }).click();
+  if (supported) {
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Проверочный звук запущен' }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => (window as typeof window & { __audioContexts: number }).__audioContexts,
+      ),
+    ).toBe(2);
+  } else await expect(page.getByRole('alert')).toContainText('недоступно воспроизведение');
+  expect(
+    await page
+      .locator('.step[aria-pressed=true]')
+      .evaluateAll((elements) => elements.map((el) => el.getAttribute('aria-label'))),
+  ).toEqual(notes);
+  await expect(page.getByRole('button', { name: 'Играть', exact: true })).toBeEnabled();
+});

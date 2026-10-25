@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite';
+import packageJson from './package.json' with { type: 'json' };
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
+  define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version) },
   base: process.env.BASE_PATH || '/',
   build: { manifest: true },
   plugins: [
