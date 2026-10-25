@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   BAR_TICKS,
   INSTRUMENT_DETAILS,
   displayInstruments,
+  eventId,
+  type DrumEvent,
   VELOCITIES,
   gridTicks,
   strengthOf,
@@ -57,6 +59,21 @@ export function DrumGrid({
   const step = gridTicks(grid);
   const steps = grid;
   const barStart = bar * BAR_TICKS;
+  // Build once per edit, not once per cell on every playhead update.
+  const cells = useMemo(() => {
+    const hits = new Map<string, DrumEvent>();
+    const hidden = new Map<string, number>();
+    for (const event of pattern.events) {
+      if (event.tick < barStart || event.tick >= barStart + BAR_TICKS) continue;
+      const offset = event.tick - barStart;
+      if (offset % step === 0) hits.set(eventId(event.instrument, event.tick), event);
+      else {
+        const key = eventId(event.instrument, barStart + Math.floor(offset / step) * step);
+        hidden.set(key, (hidden.get(key) ?? 0) + 1);
+      }
+    }
+    return { hits, hidden };
+  }, [pattern.events, barStart, step]);
   useEffect(() => {
     if (scroll.current) scroll.current.scrollLeft = scrollLeft;
   }, [scrollLeft]);
@@ -179,12 +196,9 @@ export function DrumGrid({
               >
                 {Array.from({ length: steps }, (_, i) => {
                   const tick = barStart + i * step;
-                  const hit = pattern.events.find(
-                    (e) => e.instrument === instrument && e.tick === tick,
-                  );
-                  const hiddenHits = pattern.events.filter(
-                    (e) => e.instrument === instrument && e.tick > tick && e.tick < tick + step,
-                  ).length;
+                  const key = eventId(instrument, tick);
+                  const hit = cells.hits.get(key);
+                  const hiddenHits = cells.hidden.get(key) ?? 0;
                   const active = playing && position >= tick && position < tick + step;
                   const strength = hit ? strengthOf(hit.velocity) : null;
                   return (
