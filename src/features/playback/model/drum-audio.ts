@@ -1,4 +1,4 @@
-import type { DrumEvent, Instrument } from '../../../entities/drum-pattern';
+import { INSTRUMENTS, type DrumEvent, type Instrument } from '../../../entities/drum-pattern';
 import type { AudioDriver } from './scheduler';
 /** Owns its context; importing this module never touches audio hardware. */
 export class DrumAudio implements AudioDriver {
@@ -30,7 +30,7 @@ export class DrumAudio implements AudioDriver {
   private async load(): Promise<void> {
     const context = this.context!;
     await Promise.all(
-      (['kick', 'snare', 'hat'] as const).map(async (instrument) => {
+      INSTRUMENTS.map(async (instrument) => {
         const response = await fetch(`${import.meta.env.BASE_URL}sounds/${instrument}.wav`);
         if (!response.ok) throw new Error('Не удалось загрузить звуки. Проверьте соединение.');
         this.buffers.set(instrument, await context.decodeAudioData(await response.arrayBuffer()));

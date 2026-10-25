@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { parseMidi } from 'midi-file';
 import {
   createPattern,
+  addInstrument,
   resizePattern,
   setHit,
   setTempo,
@@ -37,5 +38,25 @@ describe('MIDI independent decoder', () => {
   it('exports an empty phrase without shortening it', () => {
     const events = parseMidi(encodeMidi(createPattern())).tracks[0];
     expect(events.at(-1)).toMatchObject({ type: 'endOfTrack', deltaTime: 3840 });
+  });
+
+  it('maps all extra instruments to independent GM notes with their velocities', () => {
+    let pattern = createPattern();
+    const kit = [
+      ['tom1', 50],
+      ['tom2', 47],
+      ['tom3', 43],
+      ['ride', 51],
+      ['crash1', 49],
+      ['crash2', 57],
+    ] as const;
+    for (let i = 0; i < kit.length; i++) {
+      pattern = addInstrument(pattern, kit[i][0]);
+      pattern = setHit(pattern, kit[i][0], i * 120, 35 + i * 10);
+    }
+    const notes = parseMidi(encodeMidi(pattern)).tracks[0].filter((e) => e.type === 'noteOn');
+    expect(notes.map((e) => [e.noteNumber, e.velocity, e.channel])).toEqual(
+      kit.map(([, note], i) => [note, 35 + i * 10, 9]),
+    );
   });
 });

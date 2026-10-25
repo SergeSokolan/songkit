@@ -1,6 +1,29 @@
 export const PPQ = 960;
 export const BAR_TICKS = PPQ * 4;
-export const INSTRUMENTS = ['kick', 'snare', 'hat'] as const;
+// Physical height, bottom to top. DOM display reverses this order.
+export const INSTRUMENTS = [
+  'kick',
+  'snare',
+  'tom1',
+  'tom2',
+  'tom3',
+  'hat',
+  'ride',
+  'crash1',
+  'crash2',
+] as const;
+export const BASE_INSTRUMENTS = ['kick', 'snare', 'hat'] as const;
+export const INSTRUMENT_DETAILS = {
+  kick: { name: 'Бочка', label: 'KICK', midiNote: 36, icon: 'kick' },
+  snare: { name: 'Малый', label: 'SNARE', midiNote: 38, icon: 'snare' },
+  tom1: { name: 'Том 1', label: 'HIGH TOM', midiNote: 50, icon: 'tom' },
+  tom2: { name: 'Том 2', label: 'MID TOM', midiNote: 47, icon: 'tom' },
+  tom3: { name: 'Том 3', label: 'FLOOR TOM', midiNote: 43, icon: 'tom' },
+  hat: { name: 'Хай-хэт', label: 'HI-HAT', midiNote: 42, icon: 'hat' },
+  ride: { name: 'Райд', label: 'RIDE', midiNote: 51, icon: 'cymbal' },
+  crash1: { name: 'Крэш 1', label: 'CRASH 1', midiNote: 49, icon: 'cymbal' },
+  crash2: { name: 'Крэш 2', label: 'CRASH 2', midiNote: 57, icon: 'cymbal' },
+} as const;
 export type Instrument = (typeof INSTRUMENTS)[number];
 export const VELOCITIES = { ghost: 35, normal: 80, accent: 115 } as const;
 export type Strength = keyof typeof VELOCITIES;
@@ -12,7 +35,8 @@ export interface DrumEvent {
   velocity: number;
 }
 export interface Pattern {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  instruments: Instrument[];
   tempo: number;
   timeSignature: readonly [4, 4];
   barCount: number;
@@ -31,7 +55,27 @@ export interface Draft {
 }
 export const defaultView: EditorView = { bar: 0, grid: 8, position: 0, scrollLeft: 0 };
 export function createPattern(): Pattern {
-  return { schemaVersion: 1, tempo: 100, timeSignature: [4, 4], barCount: 1, events: [] };
+  return {
+    schemaVersion: 2,
+    instruments: [...BASE_INSTRUMENTS],
+    tempo: 100,
+    timeSignature: [4, 4],
+    barCount: 1,
+    events: [],
+  };
+}
+export function addInstrument(pattern: Pattern, instrument: Instrument): Pattern {
+  if (!INSTRUMENTS.includes(instrument)) throw new Error('Неизвестный инструмент');
+  if (pattern.instruments.includes(instrument)) return pattern;
+  return {
+    ...pattern,
+    instruments: INSTRUMENTS.filter(
+      (item) => item === instrument || pattern.instruments.includes(item),
+    ),
+  };
+}
+export function displayInstruments(pattern: Pattern): Instrument[] {
+  return INSTRUMENTS.filter((instrument) => pattern.instruments.includes(instrument)).reverse();
 }
 export function eventId(instrument: Instrument, tick: number): string {
   return `${instrument}:${tick}`;
@@ -53,6 +97,7 @@ export function setHit(
 ): Pattern {
   if (
     !INSTRUMENTS.includes(instrument) ||
+    !pattern.instruments.includes(instrument) ||
     !Number.isInteger(tick) ||
     tick < 0 ||
     tick >= totalTicks(pattern) ||
@@ -102,7 +147,7 @@ export function parsePattern(value: unknown): Pattern {
   if (!value || typeof value !== 'object') throw new Error('Неверный файл проекта');
   const p = value as Record<string, unknown>;
   if (
-    p.schemaVersion !== 1 ||
+    (p.schemaVersion !== 1 && p.schemaVersion !== 2) ||
     !Array.isArray(p.timeSignature) ||
     p.timeSignature.length !== 2 ||
     p.timeSignature[0] !== 4 ||
@@ -114,15 +159,31 @@ export function parsePattern(value: unknown): Pattern {
     Number(p.barCount) < 1 ||
     Number(p.barCount) > 4 ||
     !Array.isArray(p.events) ||
-    p.events.length > 384
+    p.events.length > 1152
   )
     throw new Error('Неподдерживаемый формат проекта');
+  let instruments: Instrument[];
+  if (p.schemaVersion === 1) instruments = [...BASE_INSTRUMENTS];
+  else {
+    if (
+      !Array.isArray(p.instruments) ||
+      p.instruments.some((item) => !INSTRUMENTS.includes(item)) ||
+      new Set(p.instruments).size !== p.instruments.length ||
+      BASE_INSTRUMENTS.some((item) => !(p.instruments as unknown[]).includes(item))
+    )
+      throw new Error('Неверный набор инструментов');
+    const active = p.instruments;
+    instruments = INSTRUMENTS.filter((item) => active.includes(item));
+  }
+  if (p.events.length > Number(p.barCount) * 32 * instruments.length)
+    throw new Error('Слишком много ударов');
   const seen = new Set<string>();
   const events: DrumEvent[] = p.events.map((item: unknown) => {
     if (!item || typeof item !== 'object') throw new Error('Неверный удар');
     const e = item as Record<string, unknown>;
     if (
       !INSTRUMENTS.includes(e.instrument as Instrument) ||
+      !instruments.includes(e.instrument as Instrument) ||
       !Number.isInteger(e.tick) ||
       Number(e.tick) < 0 ||
       Number(e.tick) >= Number(p.barCount) * BAR_TICKS ||
@@ -140,7 +201,8 @@ export function parsePattern(value: unknown): Pattern {
     return { id, instrument, tick, velocity: Number(e.velocity) };
   });
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    instruments,
     tempo: Number(p.tempo),
     timeSignature: [4, 4],
     barCount: Number(p.barCount),

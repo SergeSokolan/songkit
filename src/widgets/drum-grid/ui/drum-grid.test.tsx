@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { createPattern, setHit } from '../../../entities/drum-pattern';
+import { addInstrument, createPattern, INSTRUMENTS, setHit } from '../../../entities/drum-pattern';
 import { DrumGrid } from './drum-grid';
 afterEach(() => {
   cleanup();
@@ -62,5 +62,29 @@ describe('drum grid interactions', () => {
     expect(p.onHit).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Тихий, сила 35' }));
     expect(p.onHit).toHaveBeenCalledExactlyOnceWith('snare', 480, 35);
+  });
+
+  it('displays the base kit bottom-up and inserts optional instruments at their height', () => {
+    const p = props();
+    const { container, rerender } = render(<DrumGrid {...p} />);
+    const labels = () =>
+      Array.from(container.querySelectorAll('.track-label strong')).map((el) => el.textContent);
+    expect(labels()).toEqual(['Хай-хэт', 'Малый', 'Бочка']);
+    for (const instrument of [...INSTRUMENTS].reverse())
+      p.pattern = addInstrument(p.pattern, instrument);
+    rerender(<DrumGrid {...p} />);
+    expect(labels()).toEqual([
+      'Крэш 2',
+      'Крэш 1',
+      'Райд',
+      'Хай-хэт',
+      'Том 3',
+      'Том 2',
+      'Том 1',
+      'Малый',
+      'Бочка',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Крэш 2, такт 1, шаг 1, пусто' }));
+    expect(p.onHit).toHaveBeenCalledExactlyOnceWith('crash2', 0, 80);
   });
 });

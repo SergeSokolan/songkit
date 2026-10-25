@@ -50,3 +50,40 @@ wav('hat', 0.11, (t) => {
   previous = n;
   return high * 0.3 * Math.exp(-t * 55) * Math.min(1, t * 3000);
 });
+for (const [name, frequency, decay] of [
+  ['tom1', 185, 9],
+  ['tom2', 142, 8],
+  ['tom3', 104, 7],
+]) {
+  wav(
+    name,
+    0.65,
+    (t) =>
+      (Math.sin(2 * Math.PI * (frequency * t + 1.8 * (1 - Math.exp(-t * 28)))) * 0.72 +
+        Math.sin(2 * Math.PI * frequency * 1.57 * t) * 0.13 +
+        noise() * Math.exp(-t * 90) * 0.15) *
+      Math.exp(-t * decay) *
+      Math.min(1, t * 1800),
+  );
+}
+function cymbal(name, duration, base, decay, noiseMix) {
+  let prior = 0;
+  wav(name, duration, (t) => {
+    const n = noise(),
+      high = n - prior;
+    prior = n;
+    const metal =
+      [1, 1.342, 1.731, 2.117, 2.703].reduce(
+        (sum, ratio) => sum + Math.sin(2 * Math.PI * base * ratio * t),
+        0,
+      ) / 5;
+    return (
+      (metal * (1 - noiseMix) + high * noiseMix * 0.6) *
+      Math.exp(-t * decay) *
+      Math.min(1, t * 1800)
+    );
+  });
+}
+cymbal('ride', 1.3, 2093, 5, 0.32);
+cymbal('crash1', 1.8, 1567, 3.8, 0.75);
+cymbal('crash2', 2.2, 1244, 3.2, 0.8);

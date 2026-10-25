@@ -14,6 +14,8 @@ export function Icon({
     | 'kick'
     | 'snare'
     | 'hat'
+    | 'tom'
+    | 'cymbal'
     | 'stop'
     | 'upload';
   size?: number;
@@ -61,6 +63,17 @@ export function Icon({
       <>
         <ellipse cx="12" cy="8" rx="9" ry="4" />
         <path d="M3 8v8c0 5 18 5 18 0V8M7 11v7m10-7v7" />
+      </>
+    ),
+    tom: (
+      <>
+        <ellipse cx="12" cy="5" rx="8" ry="3" />
+        <path d="M4 5v12c0 5 16 5 16 0V5M7 8v10m10-10v10" />
+      </>
+    ),
+    cymbal: (
+      <>
+        <path d="m2 9 8-3h4l8 3c-4 4-16 4-20 0ZM12 3v17m-5 2 5-4 5 4" />
       </>
     ),
     hat: (

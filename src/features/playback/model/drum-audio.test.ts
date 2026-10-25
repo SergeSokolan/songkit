@@ -54,7 +54,7 @@ describe('audio adapter', () => {
     await audio.prepare();
     expect(constructor).toHaveBeenCalledExactlyOnceWith({ latencyHint: 'interactive' });
     expect(context.resume).toHaveBeenCalledTimes(2);
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledTimes(9);
     expect(audio.now()).toBe(1);
     audio.preview({ id: 'snare:0', instrument: 'snare', tick: 0, velocity: 35 });
     expect(source.start).toHaveBeenCalledWith(1.005);
@@ -81,6 +81,6 @@ describe('audio adapter', () => {
     const audio = new DrumAudio();
     await expect(audio.prepare()).rejects.toThrow('загрузить звуки');
     await expect(audio.prepare()).rejects.toThrow('загрузить звуки');
-    expect(fetch).toHaveBeenCalledTimes(6);
+    expect(fetch).toHaveBeenCalledTimes(18);
   });
 });
