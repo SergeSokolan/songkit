@@ -16,7 +16,7 @@ import {
   type Instrument,
 } from '../../../entities/drum-pattern';
 import { usePattern } from '../../../features/edit-pattern';
-import { usePlayback } from '../../../features/playback';
+import { AudioHelp, usePlayback } from '../../../features/playback';
 import { useAutosave } from '../../../features/draft-recovery';
 import { exportMidi, exportProject, importProject } from '../../../features/export-pattern';
 import { InstrumentPicker } from '../../../widgets/instrument-picker';
@@ -205,6 +205,11 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             onPause={playback.stop}
             onReset={playback.reset}
           />
+          <AudioHelp
+            loading={playback.loading}
+            tested={playback.soundTested}
+            onCheck={() => void playback.checkSound()}
+          />
           {playback.error && (
             <div role="alert" className="inline-notice warning">
               {playback.error}
@@ -385,7 +390,16 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
       </main>
       <footer className="site-footer">
         <span>SONGKIT / DRUM WORKSHOP</span>
-        <span>Сделано для ваших идей</span>
+        <a
+          className="github-link"
+          href="https://github.com/SergeSokolan/songkit"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Исходный код SongKit на GitHub"
+        >
+          <Icon name="github" size={18} />
+          GitHub<span className="app-version">v{import.meta.env.VITE_APP_VERSION ?? 'dev'}</span>
+        </a>
       </footer>
     </div>
   );

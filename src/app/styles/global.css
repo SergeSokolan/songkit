@@ -1229,3 +1229,73 @@ input[type='range'] {
     font-size: 10px;
   }
 }
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #b4c3a7;
+  letter-spacing: 0.5px;
+}
+.github-link:hover {
+  color: var(--orange);
+}
+.app-version {
+  color: var(--muted);
+  font-size: 9px;
+  margin-left: 4px;
+}
+.audio-help {
+  padding: 0 25px;
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.audio-help summary {
+  cursor: pointer;
+  width: fit-content;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  color: #b6c5a6;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.audio-help-content {
+  border: 1px solid #46513d;
+  background: #252e20;
+  padding: 14px 16px;
+  border-radius: 8px;
+  line-height: 1.75;
+}
+.audio-help-content p {
+  margin: 0 0 12px;
+}
+.audio-help-content .secondary-button {
+  margin-bottom: 12px;
+}
+.audio-help-content a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #c0d3ab;
+}
+@media (max-width: 760px) {
+  .audio-help {
+    padding: 0 16px;
+  }
+  .site-footer {
+    align-items: center;
+  }
+}
+.iphone-audio-hint {
+  margin: 12px 25px 0;
+  color: #b6c5a6;
+  font-size: 11px;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .iphone-audio-hint {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
