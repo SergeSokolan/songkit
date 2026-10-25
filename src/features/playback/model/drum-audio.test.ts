@@ -1,15 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DrumAudio } from './drum-audio';
-const mocks = vi.hoisted(() => ({
-  start: vi.fn().mockResolvedValue(undefined),
-  getContext: vi.fn(),
-}));
-vi.mock('tone', () => mocks);
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 describe('audio adapter', () => {
+  it('does not construct an audio context before a user requests sound', () => {
+    const constructor = vi.fn();
+    vi.stubGlobal('AudioContext', constructor);
+    const audio = new DrumAudio();
+    expect(constructor).not.toHaveBeenCalled();
+    expect(audio.now()).toBe(0);
+    audio.silence();
+  });
   it('explains an unavailable audio API without touching the network', async () => {
     vi.stubGlobal('AudioContext', undefined);
     const fetch = vi.fn();
@@ -17,8 +20,7 @@ describe('audio adapter', () => {
     await expect(new DrumAudio().prepare()).rejects.toThrow('недоступно воспроизведение');
     expect(fetch).not.toHaveBeenCalled();
   });
-  it('loads local sounds once, schedules gain and stops pending sources', async () => {
-    vi.stubGlobal('AudioContext', class {});
+  it('loads sounds once, resumes a single context, schedules gain and stops sources', async () => {
     const source = {
       buffer: null,
       connect: vi.fn(),
@@ -33,12 +35,16 @@ describe('audio adapter', () => {
       currentTime: 1,
       state: 'running',
       destination: {},
+      resume: vi.fn().mockResolvedValue(undefined),
       decodeAudioData: vi.fn().mockResolvedValue({}),
       createBufferSource: () => source,
       createGain: () => gain,
       addEventListener: vi.fn(),
     };
-    mocks.getContext.mockReturnValue({ rawContext: context });
+    const constructor = vi.fn(function () {
+      return context;
+    });
+    vi.stubGlobal('AudioContext', constructor);
     const fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
@@ -46,7 +52,9 @@ describe('audio adapter', () => {
     const audio = new DrumAudio();
     await audio.prepare();
     await audio.prepare();
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(constructor).toHaveBeenCalledExactlyOnceWith({ latencyHint: 'interactive' });
+    expect(context.resume).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(9);
     expect(audio.now()).toBe(1);
     audio.preview({ id: 'snare:0', instrument: 'snare', tick: 0, velocity: 35 });
     expect(source.start).toHaveBeenCalledWith(1.005);
@@ -61,14 +69,18 @@ describe('audio adapter', () => {
     context.addEventListener.mock.calls[0][1]();
     expect(suspended).toHaveBeenCalledOnce();
   });
-  it('reports sample fetch failure and allows retry', async () => {
-    vi.stubGlobal('AudioContext', class {});
-    mocks.getContext.mockReturnValue({ rawContext: { addEventListener: vi.fn() } });
+  it('reports fetch failure and allows retry', async () => {
+    vi.stubGlobal(
+      'AudioContext',
+      vi.fn(function () {
+        return { addEventListener: vi.fn(), resume: vi.fn().mockResolvedValue(undefined) };
+      }),
+    );
     const fetch = vi.fn().mockResolvedValue({ ok: false });
     vi.stubGlobal('fetch', fetch);
     const audio = new DrumAudio();
     await expect(audio.prepare()).rejects.toThrow('загрузить звуки');
     await expect(audio.prepare()).rejects.toThrow('загрузить звуки');
-    expect(fetch).toHaveBeenCalledTimes(6);
+    expect(fetch).toHaveBeenCalledTimes(18);
   });
 });

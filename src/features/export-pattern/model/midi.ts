@@ -1,5 +1,10 @@
-import { PPQ, parsePattern, totalTicks, type Pattern } from '../../../entities/drum-pattern';
-const notes = { kick: 36, snare: 38, hat: 42 };
+import {
+  INSTRUMENT_DETAILS,
+  PPQ,
+  parsePattern,
+  totalTicks,
+  type Pattern,
+} from '../../../entities/drum-pattern';
 function variable(value: number): number[] {
   const result = [value & 127];
   while ((value = Math.floor(value / 128)) > 0) result.unshift((value & 127) | 128);
@@ -40,8 +45,8 @@ export function encodeMidi(input: Pattern): Uint8Array<ArrayBuffer> {
   ];
   const events = pattern.events
     .flatMap((e) => [
-      { tick: e.tick, bytes: [0x99, notes[e.instrument], e.velocity] },
-      { tick: e.tick + 60, bytes: [0x89, notes[e.instrument], 0] },
+      { tick: e.tick, bytes: [0x99, INSTRUMENT_DETAILS[e.instrument].midiNote, e.velocity] },
+      { tick: e.tick + 60, bytes: [0x89, INSTRUMENT_DETAILS[e.instrument].midiNote, 0] },
     ])
     .sort((a, b) => a.tick - b.tick || a.bytes[0] - b.bytes[0]);
   let previous = 0;

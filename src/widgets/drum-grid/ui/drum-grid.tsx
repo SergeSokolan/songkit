@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   BAR_TICKS,
-  INSTRUMENTS,
+  INSTRUMENT_DETAILS,
+  displayInstruments,
+  eventId,
+  type DrumEvent,
   VELOCITIES,
   gridTicks,
   strengthOf,
@@ -11,8 +14,6 @@ import {
   type Strength,
 } from '../../../entities/drum-pattern';
 import { Icon } from '../../../shared/ui/icon';
-const names = { kick: 'Бочка', snare: 'Малый', hat: 'Хай-хэт' };
-const english = { kick: 'KICK', snare: 'SNARE', hat: 'HI-HAT' };
 const strengthNames = { ghost: 'Тихий', normal: 'Обычный', accent: 'Акцент' };
 interface Selection {
   instrument: Instrument;
@@ -54,9 +55,25 @@ export function DrumGrid({
   const dragging = useRef(false);
   const scroll = useRef<HTMLDivElement>(null);
   const suppressClick = useRef(false);
+  const instruments = displayInstruments(pattern);
   const step = gridTicks(grid);
   const steps = grid;
   const barStart = bar * BAR_TICKS;
+  // Build once per edit, not once per cell on every playhead update.
+  const cells = useMemo(() => {
+    const hits = new Map<string, DrumEvent>();
+    const hidden = new Map<string, number>();
+    for (const event of pattern.events) {
+      if (event.tick < barStart || event.tick >= barStart + BAR_TICKS) continue;
+      const offset = event.tick - barStart;
+      if (offset % step === 0) hits.set(eventId(event.instrument, event.tick), event);
+      else {
+        const key = eventId(event.instrument, barStart + Math.floor(offset / step) * step);
+        hidden.set(key, (hidden.get(key) ?? 0) + 1);
+      }
+    }
+    return { hits, hidden };
+  }, [pattern.events, barStart, step]);
   useEffect(() => {
     if (scroll.current) scroll.current.scrollLeft = scrollLeft;
   }, [scrollLeft]);
@@ -141,19 +158,19 @@ export function DrumGrid({
     <>
       {moving && (
         <div className="inline-notice">
-          Выберите новое место на дорожке «{names[moving.instrument]}».{' '}
+          Выберите новое место на дорожке «{INSTRUMENT_DETAILS[moving.instrument].name}».{' '}
           <button onClick={() => setMoving(null)}>Отмена</button>
         </div>
       )}
       <div className="sequencer" role="group" aria-label="Барабанная сетка">
         <div className="track-labels">
           <div className="ruler-label">ДОЛИ</div>
-          {INSTRUMENTS.map((instrument) => (
+          {instruments.map((instrument) => (
             <div className={`track-label ${instrument}`} key={instrument}>
-              <Icon name={instrument} size={25} />
+              <Icon name={INSTRUMENT_DETAILS[instrument].icon} size={25} />
               <div>
-                <strong>{names[instrument]}</strong>
-                <span>{english[instrument]}</span>
+                <strong>{INSTRUMENT_DETAILS[instrument].name}</strong>
+                <span>{INSTRUMENT_DETAILS[instrument].label}</span>
               </div>
             </div>
           ))}
@@ -171,7 +188,7 @@ export function DrumGrid({
                 </span>
               ))}
             </div>
-            {INSTRUMENTS.map((instrument) => (
+            {instruments.map((instrument) => (
               <div
                 className={`track-row ${instrument}`}
                 key={instrument}
@@ -179,12 +196,9 @@ export function DrumGrid({
               >
                 {Array.from({ length: steps }, (_, i) => {
                   const tick = barStart + i * step;
-                  const hit = pattern.events.find(
-                    (e) => e.instrument === instrument && e.tick === tick,
-                  );
-                  const hiddenHits = pattern.events.filter(
-                    (e) => e.instrument === instrument && e.tick > tick && e.tick < tick + step,
-                  ).length;
+                  const key = eventId(instrument, tick);
+                  const hit = cells.hits.get(key);
+                  const hiddenHits = cells.hidden.get(key) ?? 0;
                   const active = playing && position >= tick && position < tick + step;
                   const strength = hit ? strengthOf(hit.velocity) : null;
                   return (
@@ -195,7 +209,7 @@ export function DrumGrid({
                       data-instrument={instrument}
                       data-tick={tick}
                       className={`step ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (grid / 4) === 0 ? 'downbeat' : ''}`}
-                      aria-label={`${names[instrument]}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
+                      aria-label={`${INSTRUMENT_DETAILS[instrument].name}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
                       aria-pressed={!!hit}
                       onPointerDown={(e) => pointerDown(e, instrument, tick, !!hit)}
                       onPointerMove={pointerMove}
@@ -250,7 +264,7 @@ export function DrumGrid({
             <div className="sheet-heading">
               <div>
                 <span className="eyebrow">СИЛА УДАРА</span>
-                <h3>{names[selection.instrument]}</h3>
+                <h3>{INSTRUMENT_DETAILS[selection.instrument].name}</h3>
               </div>
               <button
                 autoFocus

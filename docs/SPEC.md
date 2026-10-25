@@ -9,7 +9,7 @@
 
 ## Стек
 
-TypeScript strict, React, Vite, Tone.js/Web Audio, VexFlow, IndexedDB для черновика, Service Worker/Cache Storage для ресурсов. MP3 кодировать локально в Worker; библиотеку выбрать после проверки лицензии, Safari и размера. npm с lockfile, npm ci, закреплённая поддерживаемая Node LTS. Проверять реальные API и совместимость выбранных версий перед использованием.
+TypeScript strict, React, Vite, нативный Web Audio, VexFlow, IndexedDB для черновика, Service Worker/Cache Storage для ресурсов. MP3 кодировать локально в Worker; библиотеку выбрать после проверки лицензии, Safari и размера. npm с lockfile, npm ci, закреплённая поддерживаемая Node LTS. Проверять реальные API и совместимость выбранных версий перед использованием.
 
 ## FSD
 
@@ -102,3 +102,9 @@ https://public.vexflow.com/
 https://cli.github.com/manual/gh_auth_login
 https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 https://www.guitar-pro.com/docs/gp8/import-export/import
+
+## Уточнение пользователя от 2026-10-25: версия 0.2
+
+Три базовые дорожки всегда видны. Порядок снизу вверх: бочка, малый, том 1, том 2, том 3, хай-хэт, райд, крэш 1, крэш 2. Шесть дополнительных инструментов добавляются через интерфейс и имеют собственные звуки и GM-ноты. Сохранение, история, MIDI и офлайн охватывают полный набор. Формат Pattern v2, импорт и восстановление v1 обязательны.
+
+Пользователь разрешил публичную публикацию на GitHub Pages и поручил исправить CI/CD. После зелёных проверок PR и main разрешены merge и deploy проверенного артефакта. Нативный Web Audio заменяет Tone.js: приложение не инициализирует аудио до действия пользователя. Остальные этапы, включая нотацию, брейки, MP3/MusicXML, остаются отдельными задачами.

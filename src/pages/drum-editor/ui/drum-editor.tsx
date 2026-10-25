@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   BAR_TICKS,
+  addInstrument,
   createPattern,
   demoPattern,
   defaultView,
@@ -18,6 +19,7 @@ import { usePattern } from '../../../features/edit-pattern';
 import { usePlayback } from '../../../features/playback';
 import { useAutosave } from '../../../features/draft-recovery';
 import { exportMidi, exportProject, importProject } from '../../../features/export-pattern';
+import { InstrumentPicker } from '../../../widgets/instrument-picker';
 import { DrumGrid } from '../../../widgets/drum-grid';
 import { TransportPanel } from '../../../widgets/transport-panel';
 import { Icon } from '../../../shared/ui/icon';
@@ -265,6 +267,10 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
               </div>
             </div>
           </div>
+          <InstrumentPicker
+            instruments={pattern.instruments}
+            onAdd={(instrument) => change((p) => addInstrument(p, instrument))}
+          />
           <DrumGrid
             pattern={pattern}
             bar={bar}

@@ -1,6 +1,6 @@
-import * as Tone from 'tone';
-import type { DrumEvent, Instrument } from '../../../entities/drum-pattern';
+import { INSTRUMENTS, type DrumEvent, type Instrument } from '../../../entities/drum-pattern';
 import type { AudioDriver } from './scheduler';
+/** Owns its context; importing this module never touches audio hardware. */
 export class DrumAudio implements AudioDriver {
   private context: AudioContext | null = null;
   onSuspend: () => void = () => {};
@@ -8,17 +8,19 @@ export class DrumAudio implements AudioDriver {
   private sources = new Set<AudioBufferSourceNode>();
   private loading: Promise<void> | null = null;
   async prepare(): Promise<void> {
-    if (typeof globalThis.AudioContext !== 'function')
+    if (typeof globalThis.AudioContext !== 'function') {
       throw new Error(
         'В этом браузере недоступно воспроизведение. Откройте SongKit в Safari на iPhone или современном Chrome.',
       );
-    await Tone.start();
-    const context = Tone.getContext().rawContext as AudioContext;
-    if (this.context !== context)
+    }
+    if (!this.context) {
+      const context = new AudioContext({ latencyHint: 'interactive' });
       context.addEventListener('statechange', () => {
         if (context.state !== 'running') this.onSuspend();
       });
-    this.context = context;
+      this.context = context;
+    }
+    await this.context.resume();
     this.loading ??= this.load().catch((error) => {
       this.loading = null;
       throw error;
@@ -28,7 +30,7 @@ export class DrumAudio implements AudioDriver {
   private async load(): Promise<void> {
     const context = this.context!;
     await Promise.all(
-      (['kick', 'snare', 'hat'] as const).map(async (instrument) => {
+      INSTRUMENTS.map(async (instrument) => {
         const response = await fetch(`${import.meta.env.BASE_URL}sounds/${instrument}.wav`);
         if (!response.ok) throw new Error('Не удалось загрузить звуки. Проверьте соединение.');
         this.buffers.set(instrument, await context.decodeAudioData(await response.arrayBuffer()));

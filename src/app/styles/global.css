@@ -1162,3 +1162,70 @@ input[type='range'] {
     margin-left: auto;
   }
 }
+.tom1 {
+  --track: #e4bc83;
+  color: var(--track);
+}
+.tom2 {
+  --track: #d6ab7d;
+  color: var(--track);
+}
+.tom3 {
+  --track: #ca9676;
+  color: var(--track);
+}
+.ride {
+  --track: #dbc779;
+  color: var(--track);
+}
+.crash1 {
+  --track: #c6addb;
+  color: var(--track);
+}
+.crash2 {
+  --track: #dab0c3;
+  color: var(--track);
+}
+.kit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 25px 16px;
+  padding-top: 4px;
+}
+.kit-count {
+  font-size: 10px;
+  color: var(--muted);
+}
+.instrument-picker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #b9c6ac;
+}
+.instrument-picker select {
+  min-height: 44px;
+  max-width: 210px;
+  padding: 0 9px;
+  border: 1px solid #46513d;
+  border-radius: 7px;
+  background: #283022;
+  color: #c5d2b9;
+  font-size: 11px;
+  cursor: pointer;
+}
+.kit-complete {
+  color: var(--green);
+  font-size: 11px;
+  padding: 14px 0;
+}
+@media (max-width: 760px) {
+  .kit-toolbar {
+    margin: 0 16px 12px;
+  }
+  .instrument-picker select {
+    max-width: 185px;
+    font-size: 10px;
+  }
+}
