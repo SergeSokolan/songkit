@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { FillPanel, applyFill, type Fill, type FillRange } from '../../../features/manage-fills';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BAR_TICKS,
   addInstrument,
@@ -30,14 +31,54 @@ interface Props {
   updateAvailable: boolean;
 }
 export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailable }: Props) {
-  const { pattern, change, canUndo, canRedo, undo, redo } = usePattern(
+  const { pattern, revision, change, canUndo, canRedo, undo, redo } = usePattern(
     initial?.pattern ?? demoPattern(),
   );
+  const [fillPreview, setFillPreview] = useState<{
+    base: typeof revision;
+    pattern: typeof pattern;
+    range: FillRange;
+    fillId: string;
+    view: EditorView;
+  } | null>(null);
+  const activePreview = fillPreview?.base === revision ? fillPreview : null;
+  useEffect(() => {
+    const hide = () => {
+      if (document.hidden) setFillPreview(null);
+    };
+    document.addEventListener('visibilitychange', hide);
+    window.addEventListener('pagehide', hide);
+    return () => {
+      document.removeEventListener('visibilitychange', hide);
+      window.removeEventListener('pagehide', hide);
+    };
+  }, []);
+  const previewFill = (fill: Fill, range: FillRange, allowMissing: boolean) => {
+    setFillPreview({
+      base: revision,
+      pattern: applyFill(pattern, range, fill, allowMissing),
+      range,
+      fillId: fill.id,
+      view: {
+        ...view,
+        bar: Math.floor(range.start / BAR_TICKS),
+        grid: 16,
+        scrollLeft: ((range.start % BAR_TICKS) / 240) * 48,
+      },
+    });
+  };
   const [view, setView] = useState<EditorView>(initial?.view ?? defaultView);
   const [saveEnabled, setSaveEnabled] = useState(!recoveryError);
   const [notice, setNotice] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const bar = Math.min(view.bar, pattern.barCount - 1);
+  const editorView = activePreview?.view ?? view;
+  const visibleBar = Math.min(editorView.bar, pattern.barCount - 1);
+  const changeEditorView = (update: (v: EditorView) => EditorView) => {
+    if (activePreview)
+      setFillPreview((current) => (current ? { ...current, view: update(current.view) } : current));
+    else setView(update);
+  };
   const draft = useMemo<Draft>(
     () => ({
       schemaVersion: 1,
@@ -47,11 +88,22 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
     [pattern, view, bar],
   );
   const autosave = useAutosave(draft, saveEnabled);
-  const playback = usePlayback(pattern, draft.view.position, (tick) => {
-    const position = tick % totalTicks(pattern);
-    setView((v) => ({ ...v, position }));
-    autosave.flush({ ...draft, view: { ...draft.view, position } });
-  });
+  const playback = usePlayback(
+    pattern,
+    draft.view.position,
+    (tick) => {
+      const position = tick % totalTicks(pattern);
+      setView((v) => ({ ...v, position }));
+      autosave.flush({ ...draft, view: { ...draft.view, position } });
+    },
+    activePreview
+      ? {
+          pattern: activePreview.pattern,
+          start: activePreview.range.start,
+          end: activePreview.range.end,
+        }
+      : undefined,
+  );
   const hit = (instrument: Instrument, tick: number, velocity: number | null) => {
     change((p) => setHit(p, instrument, tick, velocity));
     if (velocity !== null) void playback.preview({ id: '', instrument, tick, velocity });
@@ -220,10 +272,10 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
               {Array.from({ length: pattern.barCount }, (_, i) => (
                 <button
                   key={i}
-                  className={`bar-tab ${bar === i ? 'selected' : ''} ${playback.playing && Math.floor(playback.position / BAR_TICKS) === i ? 'sounding' : ''}`}
+                  className={`bar-tab ${visibleBar === i ? 'selected' : ''} ${playback.playing && Math.floor(playback.position / BAR_TICKS) === i ? 'sounding' : ''}`}
                   aria-label={`Такт ${i + 1}`}
-                  aria-pressed={bar === i}
-                  onClick={() => setView((v) => ({ ...v, bar: i, scrollLeft: 0 }))}
+                  aria-pressed={visibleBar === i}
+                  onClick={() => changeEditorView((v) => ({ ...v, bar: i, scrollLeft: 0 }))}
                 >
                   <span className="small">ТАКТ</span>
                   <strong>{String(i + 1).padStart(2, '0')}</strong>
@@ -262,9 +314,9 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
                 {([4, 8, 16, 32] as Grid[]).map((grid) => (
                   <button
                     key={grid}
-                    aria-pressed={view.grid === grid}
-                    className={view.grid === grid ? 'selected' : ''}
-                    onClick={() => setView((v) => ({ ...v, grid, scrollLeft: 0 }))}
+                    aria-pressed={editorView.grid === grid}
+                    className={editorView.grid === grid ? 'selected' : ''}
+                    onClick={() => changeEditorView((v) => ({ ...v, grid, scrollLeft: 0 }))}
                   >
                     1/{grid}
                   </button>
@@ -276,19 +328,41 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             instruments={pattern.instruments}
             onAdd={(instrument) => change((p) => addInstrument(p, instrument))}
           />
-          <DrumGrid
+          <FillPanel
+            key={pattern.barCount}
             pattern={pattern}
-            bar={bar}
-            grid={view.grid}
-            position={playback.position}
-            playing={playback.playing}
-            scrollLeft={view.scrollLeft}
-            onScroll={(scrollLeft) =>
-              setView((v) => (v.scrollLeft === scrollLeft ? v : { ...v, scrollLeft }))
-            }
-            onHit={hit}
-            onMove={(instrument, from, to) => change((p) => moveHit(p, instrument, from, to))}
+            previewing={!!activePreview}
+            activeId={activePreview?.fillId}
+            onPreview={previewFill}
+            onCancel={() => setFillPreview(null)}
+            onApply={() => {
+              if (activePreview) {
+                change(() => activePreview.pattern);
+                setView(activePreview.view);
+                setFillPreview(null);
+              }
+            }}
           />
+          <fieldset
+            disabled={!!activePreview}
+            className="preview-grid"
+            aria-label="Редактор партии"
+          >
+            <DrumGrid
+              pattern={activePreview?.pattern ?? pattern}
+              fillRange={activePreview?.range}
+              bar={visibleBar}
+              grid={editorView.grid}
+              position={playback.position}
+              playing={playback.playing}
+              scrollLeft={editorView.scrollLeft}
+              onScroll={(scrollLeft) =>
+                changeEditorView((v) => (v.scrollLeft === scrollLeft ? v : { ...v, scrollLeft }))
+              }
+              onHit={hit}
+              onMove={(instrument, from, to) => change((p) => moveHit(p, instrument, from, to))}
+            />
+          </fieldset>
           <div className="grid-footer">
             <div className="legend">
               <span>

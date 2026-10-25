@@ -8,6 +8,7 @@ export function usePattern(initial: Pattern) {
   );
   return {
     pattern: history.present,
+    revision: history,
     change,
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,

@@ -268,7 +268,7 @@ test('shows the GitHub source link and release version', async ({ page }) => {
   await expect(link).toHaveAttribute('href', 'https://github.com/SergeSokolan/songkit');
   await expect(link).toHaveAttribute('target', '_blank');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-  await expect(page.locator('.app-version')).toHaveText('v0.2.1');
+  await expect(page.locator('.app-version')).toHaveText('v0.3.0');
 });
 
 test('requests music playback routing and can restore sound without changing the groove', async ({
@@ -314,4 +314,118 @@ test('requests music playback routing and can restore sound without changing the
       .evaluateAll((elements) => elements.map((el) => el.getAttribute('aria-label'))),
   ).toEqual(notes);
   await expect(page.getByRole('button', { name: 'Играть', exact: true })).toBeEnabled();
+});
+
+test('mobile tempo buttons and wheel confirm, cancel and restore offline', async ({
+  page,
+  context,
+}) => {
+  await page.getByRole('button', { name: 'Увеличить темп' }).click();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('101');
+  await page.getByRole('button', { name: 'Уменьшить темп' }).click();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('100');
+  await page.getByRole('button', { name: 'Выбрать темп барабаном' }).click();
+  await page.getByLabel('Новое значение BPM').fill('140');
+  await expect(page.getByLabel('Новое значение BPM')).toHaveValue('140');
+  await page.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('100');
+  await page.getByRole('button', { name: 'Выбрать темп барабаном' }).click();
+  const wheel = page.getByRole('listbox', { name: 'Барабан темпа BPM' });
+  await wheel.focus();
+  await wheel.press('End');
+  await expect(page.getByLabel('Новое значение BPM')).toHaveValue('240');
+  await page.getByRole('button', { name: 'Готово', exact: true }).click();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('240');
+  await expect(page.getByRole('button', { name: 'Увеличить темп' })).toBeDisabled();
+  await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
+  await expect(page.getByText('Черновик на устройстве', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('240');
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('240');
+  await page.getByRole('button', { name: 'Уменьшить темп' }).click();
+  await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('239');
+});
+
+test('four-bar fill preview cancels, adds toms atomically and survives offline reload', async ({
+  page,
+  context,
+}) => {
+  await page.getByLabel('Количество тактов').selectOption('4');
+  await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await expect(page.getByLabel('Начало брейка')).toHaveValue('14');
+  await page.getByRole('button', { name: 'Свободнее · Редкий' }).click();
+  await expect(page.getByRole('button', { name: 'Применить брейк' })).toBeVisible();
+  await expect(page.locator('.fill-selected')).not.toHaveCount(0);
+  const supported = await startOrCheckUnsupported(page);
+  await page.getByRole('button', { name: 'Движение · Средний' }).click();
+  if (supported) {
+    await expect(page.getByRole('button', { name: 'Пауза', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Пауза', exact: true }).click();
+  }
+
+  await page.getByRole('button', { name: 'Отменить предпросмотр' }).click();
+  await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
+  for (const name of ['Том 1 (добавить)', 'Том 2 (добавить)', 'Том 3 (добавить)'])
+    await page.getByRole('checkbox', { name, exact: true }).check();
+  const tomFill = page.getByRole('button', { name: 'Спуск по томам · Средний' });
+  await expect(tomFill).toBeDisabled();
+  await page.getByRole('checkbox', { name: /Разрешаю добавить/ }).check();
+  await tomFill.click();
+  await page.getByRole('button', { name: 'Применить брейк' }).click();
+  await expect(page.getByRole('button', { name: /Том 3, такт 4, шаг 15/ })).toBeEnabled();
+  await page.getByRole('button', { name: 'Отменить', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Том 3, такт 4, шаг 15/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Повторить', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Том 3, такт 4, шаг 15/ })).toBeEnabled();
+  await expect(page.getByText('Черновик на устройстве', { exact: true })).toBeVisible();
+  await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByRole('button', { name: /Том 3, такт 4, шаг 15/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await expect(page.getByRole('button', { name: 'Свободнее · Редкий' })).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'MIDI', exact: true }).click();
+  expect((await download).suggestedFilename()).toBe('songkit.mid');
+});
+
+test('editing the confirmed bit invalidates an unapplied fill even after undo', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page.getByRole('button', { name: 'Движение · Средний' }).click();
+  await page.getByRole('button', { name: 'Увеличить темп' }).click();
+  await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Отменить', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
+});
+
+test('unapplied preview preserves the saved pattern and editor view across reload', async ({
+  page,
+}) => {
+  await page.getByLabel('Количество тактов').selectOption('4');
+  await expect(page.getByText('Черновик на устройстве', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page.getByRole('button', { name: 'Разгон · Плотный' }).click();
+  await expect(page.getByRole('button', { name: 'Такт 4', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: '1/16', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Такт 1', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: '1/8', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.locator('.card-bottom')).toContainText('13 ударов');
+  await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
 });

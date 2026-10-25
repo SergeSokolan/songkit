@@ -9,7 +9,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],
-      include: ['src/entities/drum-pattern/model/**/*.ts'],
+      include: [
+        'src/entities/drum-pattern/model/**/*.ts',
+        'src/features/manage-fills/model/fills.ts',
+        'src/features/playback/model/audition.ts',
+      ],
       exclude: ['**/*.test.ts'],
       thresholds: { statements: 90, branches: 90, functions: 90, lines: 90 },
     },
