@@ -1,6 +1,6 @@
 # SongKit
 
-Текущая версия разработки: **0.4.0-rc.1**. Опубликованная версия в `main`: **0.3.0**. Изменения готовятся в [PR #18](https://github.com/SergeSokolan/songkit/pull/18); кандидат релиза не означает обновление GitHub Pages.
+Текущая версия: **0.4.0**. Изменения приняты пользователем; [PR #18](https://github.com/SergeSokolan/songkit/pull/18) объединён в `main`. Номер установленной PWA виден в футере.
 
 Барабанный редактор PWA: 4/4, 1–4 такта, девять инструментов, прямые и триольные сетки, динамика, Undo/Redo, воспроизведение, локальный черновик, MIDI/JSON, офлайн. Без аккаунта, аналитики и передачи партий.
 
@@ -61,7 +61,7 @@ npm run format:check
 
 [CHANGELOG](CHANGELOG.md) содержит изменения по версиям со ссылками сравнения; те же заметки доступны в [GitHub Releases](https://github.com/SergeSokolan/songkit/releases). [RELEASING](docs/RELEASING.md) описывает SemVer, аннотированные теги `vX.Y.Z`, кандидаты `vX.Y.Z-rc.N` и GitHub Releases. Версия в футере берётся из `package.json`; Pattern v2 и Draft v1 — независимые схемы данных.
 
-Изменения проходят PR и CI. `main` после зелёного verify публикует тот же проверенный артефакт при `PAGES_ENABLED=true`. Адрес: [SongKit](https://sergesokolan.github.io/songkit/). Тег или prerelease сами по себе Pages не обновляют. Для слияния текущего PR ранее было запрошено отдельное подтверждение; оно пока не получено.
+Изменения проходят PR и CI. `main` после зелёного verify публикует тот же проверенный артефакт при `PAGES_ENABLED=true`. Адрес: [SongKit](https://sergesokolan.github.io/songkit/). Тег или prerelease сами по себе Pages не обновляют. Пользователь разрешил слияние; обновления публикуются после зелёных проверок main.
 
 ## Звук на iPhone
 
