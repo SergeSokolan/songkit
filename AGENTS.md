@@ -12,3 +12,5 @@
 - Перед сдачей: npm run check; production build с BASE_PATH=/songkit/; npm run test:e2e. После форматирования npm run format:check.
 - Автоматический WebKit не заменяет настоящий Safari. Не заявляйте проверки устройства или CI, если их не выполняли. Пишите конкретные ограничения.
 - Пользователь разрешил публикацию на GitHub Pages 2026-10-25. Публиковать только проверенный артефакт из main после зелёного CI; PAGES_ENABLED управляет включением CD.
+
+Для каждого обновления поддерживать CHANGELOG, SemVer в package/lockfile, актуальные инструкции и снимки (npm run docs:screenshots), аннотированные теги и GitHub Releases по docs/RELEASING.md. Опубликованные теги не перемещать. RC не означает production-релиз. npm run version:check проверяет согласованность версии.

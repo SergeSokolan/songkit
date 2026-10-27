@@ -37,10 +37,11 @@ describe('drum grid interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Малый, такт 1, шаг 1, Тихий' }));
     expect(p.onHit).toHaveBeenCalledWith('snare', 0, null);
   });
-  it('context menu selects ghost velocity without toggling the hit', () => {
+  it('explicit editor selects ghost velocity without toggling the hit', () => {
     const p = props();
     render(<DrumGrid {...p} />);
-    fireEvent.contextMenu(screen.getByRole('button', { name: 'Малый, такт 1, шаг 2, пусто' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Изменить / перенести удар' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Малый, такт 1, шаг 2, пусто' }));
     fireEvent.click(screen.getByRole('button', { name: 'Тихий, сила 35' }));
     expect(p.onHit).toHaveBeenCalledExactlyOnceWith('snare', 480, 35);
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -54,22 +55,33 @@ describe('drum grid interactions', () => {
     ).toBeTruthy();
   });
 
-  it('long press opens dynamics and suppresses the following toggle', () => {
+  it('holding does not open a sheet and scrolling never edits', () => {
     vi.useFakeTimers();
     const p = props();
     render(<DrumGrid {...p} />);
     const cell = screen.getByRole('button', { name: 'Малый, такт 1, шаг 2, пусто' });
-    fireEvent.pointerDown(cell, { button: 0, pointerType: 'touch' });
+    fireEvent.pointerDown(cell, { button: 0, pointerType: 'touch', clientX: 20, clientY: 20 });
     act(() => {
-      vi.advanceTimersByTime(450);
+      vi.advanceTimersByTime(2000);
     });
-    expect(screen.getByRole('dialog', { name: 'Сила удара' })).toBeVisible();
+    fireEvent.contextMenu(cell);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.pointerMove(cell, { pointerType: 'touch', clientX: 60, clientY: 20 });
+    fireEvent.pointerUp(cell);
     fireEvent.click(cell);
     expect(p.onHit).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Тихий, сила 35' }));
-    expect(p.onHit).toHaveBeenCalledExactlyOnceWith('snare', 480, 35);
   });
-
+  it('cycles normal to ghost and imported accent to normal', () => {
+    const p = props();
+    p.pattern = setHit(p.pattern, 'snare', 0, 80);
+    const { rerender } = render(<DrumGrid {...p} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Малый, такт 1, шаг 1, Обычный' }));
+    expect(p.onHit).toHaveBeenLastCalledWith('snare', 0, 35);
+    p.pattern = setHit(p.pattern, 'snare', 0, 115);
+    rerender(<DrumGrid {...p} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Малый, такт 1, шаг 1, Акцент' }));
+    expect(p.onHit).toHaveBeenLastCalledWith('snare', 0, 80);
+  });
   it('displays the base kit bottom-up and inserts optional instruments at their height', () => {
     const p = props();
     const { container, rerender } = render(<DrumGrid {...p} />);
@@ -84,9 +96,9 @@ describe('drum grid interactions', () => {
       'Крэш 1',
       'Райд',
       'Хай-хэт',
-      'Том 3',
-      'Том 2',
       'Том 1',
+      'Том 2',
+      'Том 3',
       'Малый',
       'Бочка',
     ]);

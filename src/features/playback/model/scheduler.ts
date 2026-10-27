@@ -33,7 +33,7 @@ export class Scheduler {
     const pattern = this.getPattern();
     this.tempo = pattern.tempo;
     this.length = totalTicks(pattern);
-    this.tick = (Math.floor(position / 120) * 120) % this.length;
+    this.tick = (Math.floor(position / 40) * 40) % this.length;
     this.position = this.tick;
     this.nextTime = this.driver.now() + 0.025;
     this.running = true;
@@ -57,8 +57,8 @@ export class Scheduler {
       for (const event of pattern.events)
         if (event.tick === this.tick) this.driver.hit(event, this.nextTime);
       this.positions.push({ tick: this.tick, time: this.nextTime });
-      this.tick = (this.tick + 120) % this.length;
-      this.nextTime += 60 / this.tempo / 8;
+      this.tick = (this.tick + 40) % this.length;
+      this.nextTime += 60 / this.tempo / 24;
     }
   }
   currentPosition(): number {

@@ -26,9 +26,9 @@ describe('expandable drum kit', () => {
       'crash1',
       'ride',
       'hat',
-      'tom3',
-      'tom2',
       'tom1',
+      'tom2',
+      'tom3',
       'snare',
       'kick',
     ]);
@@ -102,7 +102,7 @@ describe('expandable drum kit', () => {
     expect(() =>
       parsePattern({
         ...createPattern(),
-        events: Array(97).fill({ instrument: 'kick', tick: 0, velocity: 80 }),
+        events: Array(145).fill({ instrument: 'kick', tick: 0, velocity: 80 }),
       }),
     ).toThrow('Слишком много');
   });

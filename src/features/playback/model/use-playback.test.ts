@@ -11,6 +11,7 @@ afterEach(() => {
 describe('audio recovery lifecycle', () => {
   it('replaces the audio context, plays a test, keeps the groove and cleans up on unmount', async () => {
     const contexts: {
+      currentTime: number;
       close: ReturnType<typeof vi.fn>;
       createBufferSource: ReturnType<typeof vi.fn>;
     }[] = [];
@@ -54,6 +55,25 @@ describe('audio recovery lifecycle', () => {
     });
     expect(result.current.playing).toBe(true);
     expect(contexts).toHaveLength(1);
+    contexts[0].currentTime = 1.2;
+    act(() => {
+      vi.advanceTimersByTime(50);
+      result.current.stop();
+    });
+    const paused = result.current.position;
+    expect(paused).toBeGreaterThan(0);
+    expect(onPause).toHaveBeenLastCalledWith(paused);
+    await act(async () => {
+      await result.current.play();
+    });
+    expect(result.current.position).toBe(paused);
+    act(() => {
+      result.current.reset();
+    });
+    expect(result.current.playing).toBe(false);
+    expect(result.current.position).toBe(0);
+    expect(onPause).toHaveBeenLastCalledWith(0);
+    expect(JSON.stringify(pattern)).toBe(snapshot);
     await act(async () => {
       await result.current.checkSound();
     });
