@@ -25,6 +25,9 @@ test.beforeEach(async ({ page }) => {
   });
   await page.goto('./');
   await expect(page.getByRole('heading', { name: /Всё начинается/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'В начало', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Играть', exact: true })).toHaveText('');
+  await expect(page.getByRole('button', { name: 'Играть у сетки', exact: true })).toHaveText('');
   expect(
     await page.evaluate(
       () => (window as typeof window & { __audioContexts: number }).__audioContexts,

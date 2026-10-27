@@ -257,7 +257,6 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             onTempo={(tempo) => change((p) => setTempo(p, tempo))}
             onPlay={() => void playback.play()}
             onPause={playback.stop}
-            onReset={playback.reset}
           />
           <AudioHelp
             loading={playback.loading}
@@ -368,14 +367,11 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             <button
               className="secondary-button"
               disabled={playback.loading}
+              aria-label={playback.playing ? 'Пауза у сетки' : 'Играть у сетки'}
+              aria-busy={playback.loading}
               onClick={playback.playing ? playback.stop : () => void playback.play()}
             >
               <Icon name={playback.playing ? 'pause' : 'play'} />
-              {playback.loading
-                ? 'Подготовка звука'
-                : playback.playing
-                  ? 'Пауза у сетки'
-                  : 'Играть у сетки'}
             </button>
             <span>
               {playback.error ? 'Ошибка звука' : activePreview ? 'Предпросмотр' : 'Партия'} · 4/4

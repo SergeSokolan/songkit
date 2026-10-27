@@ -16,7 +16,6 @@ export function Icon({
     | 'hat'
     | 'tom'
     | 'cymbal'
-    | 'stop'
     | 'upload'
     | 'github';
   size?: number;
@@ -35,7 +34,6 @@ export function Icon({
         <path d="M8 5v14M16 5v14" strokeWidth="4" />
       </>
     ),
-    stop: <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />,
     undo: (
       <>
         <path d="m9 5-5 5 5 5" />

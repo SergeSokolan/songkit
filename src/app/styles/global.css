@@ -343,21 +343,17 @@ input[type='range'] {
   background: var(--orange);
   color: #292119;
   height: 52px;
-  padding: 0 26px;
+  padding: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   font-weight: 650;
-  min-width: 138px;
+  min-width: 52px;
+  width: 52px;
   justify-content: center;
 }
 .play-button:hover {
   background: #ffb773;
-}
-.reset-button {
-  border: 1px solid #41463c;
-  height: 52px;
-  width: 48px;
 }
 .sequence-toolbar {
   display: flex;
@@ -952,12 +948,6 @@ input[type='range'] {
     width: 52px;
     padding: 0;
   }
-  .play-button > span {
-    display: none;
-  }
-  .reset-button {
-    width: 44px;
-  }
   .sequence-toolbar {
     padding: 18px 16px 10px;
     align-items: flex-start;
@@ -1118,10 +1108,6 @@ input[type='range'] {
   }
   .tempo-control {
     min-width: 124px;
-  }
-  .reset-button {
-    width: 40px;
-    min-width: 40px;
   }
 }
 @media (max-width: 760px) {
@@ -1540,16 +1526,14 @@ input[type='range'] {
   background: #20231f;
   border-bottom: 1px solid var(--line);
 }
-.grid-transport button,
-.reset-button {
-  min-height: 44px;
+.grid-transport button {
+  width: 44px;
   min-width: 44px;
-}
-.reset-button {
-  width: auto;
+  min-height: 44px;
+  padding: 0;
   display: flex;
-  gap: 6px;
   align-items: center;
+  justify-content: center;
 }
 .step,
 .beat-ruler,
