@@ -1,3 +1,4 @@
+import packageJson from '../../package.json' with { type: 'json' };
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 async function startOrCheckUnsupported(page: Page) {
@@ -268,7 +269,7 @@ test('shows the GitHub source link and release version', async ({ page }) => {
   await expect(link).toHaveAttribute('href', 'https://github.com/SergeSokolan/songkit');
   await expect(link).toHaveAttribute('target', '_blank');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-  await expect(page.locator('.app-version')).toHaveText('v0.4.0');
+  await expect(page.locator('.app-version')).toHaveText('v' + packageJson.version);
 });
 
 test('requests music playback routing and can restore sound without changing the groove', async ({

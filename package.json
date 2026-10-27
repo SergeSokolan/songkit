@@ -1,6 +1,6 @@
 {
   "name": "songkit",
-  "version": "0.4.0",
+  "version": "0.4.0-rc.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -17,9 +17,12 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run test:coverage && npm run build && npm run budget",
+    "check": "npm run format:check && npm run version:check && npm run lint && npm run typecheck && npm run architecture && npm run test:coverage && npm run build && npm run budget",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "version:check": "node scripts/check-version.mjs",
+    "docs:screenshots": "node scripts/capture-docs.mjs",
+    "release:notes": "node scripts/release-notes.mjs"
   },
   "dependencies": {
     "react": "19.3.1",

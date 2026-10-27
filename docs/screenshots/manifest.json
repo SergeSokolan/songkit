@@ -1,0 +1,39 @@
+{
+  "version": "0.4.0-rc.1",
+  "uiSourceHash": "22a4d4f717e90ad032eef9d8a58040fedfcce5f36e48adc0253c98e02659674f",
+  "capturedOn": "2026-10-27",
+  "browser": "Playwright Chromium, CSS viewports; not a real iPhone",
+  "files": [
+    "after-360.png",
+    "after-390.png",
+    "full-kit-390.png",
+    "after-430.png",
+    "desktop-1280.png"
+  ],
+  "measurements": [
+    {
+      "viewport": 360,
+      "noteArea": 350,
+      "cellWidth": 45.625,
+      "visibleCells": 7
+    },
+    {
+      "viewport": 390,
+      "noteArea": 380,
+      "cellWidth": 45.625,
+      "visibleCells": 7
+    },
+    {
+      "viewport": 430,
+      "noteArea": 420,
+      "cellWidth": 48.125,
+      "visibleCells": 8
+    },
+    {
+      "viewport": 1280,
+      "noteArea": 936,
+      "cellWidth": 111.75,
+      "visibleCells": 8
+    }
+  ]
+}
