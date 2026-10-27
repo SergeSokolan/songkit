@@ -193,59 +193,63 @@ export function DrumGrid({
               ))}
             </div>
             {instruments.map((instrument) => (
-              <div
-                className={`track-row ${instrument}`}
-                key={instrument}
-                style={{ gridTemplateColumns: `repeat(${steps}, 1fr)` }}
-              >
-                {Array.from({ length: steps }, (_, i) => {
-                  const tick = barStart + i * step;
-                  const key = eventId(instrument, tick);
-                  const hit = cells.hits.get(key);
-                  const hiddenHits = cells.hidden.get(key) ?? 0;
-                  const active = playing && position >= tick && position < tick + step;
-                  const strength = hit ? strengthOf(hit.velocity) : null;
-                  return (
-                    <button
-                      key={tick}
-                      type="button"
-                      data-cell="true"
-                      data-instrument={instrument}
-                      data-tick={tick}
-                      className={`step ${fillRange && tick >= fillRange.start && tick < fillRange.end && fillRange.tracks.includes(instrument) ? 'fill-selected' : ''} ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (steps / 4) === 0 ? 'downbeat' : ''}`}
-                      aria-label={`${INSTRUMENT_DETAILS[instrument].name}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
-                      aria-pressed={!!hit}
-                      onPointerDown={(e) => pointerDown(e, instrument, tick, !!hit)}
-                      onPointerMove={pointerMove}
-                      onPointerUp={pointerUp}
-                      onPointerCancel={() => {
-                        start.current = null;
-                        suppressClick.current = true;
-                      }}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                      }}
-                      onClick={() => {
-                        if (suppressClick.current) {
-                          suppressClick.current = false;
-                          return;
-                        }
-                        activate(instrument, tick);
-                      }}
-                    >
-                      {hit ? (
-                        <span className="hit-dot">{strength === 'accent' ? '›' : ''}</span>
-                      ) : (
-                        <span className="empty-dot" />
-                      )}
-                      {hiddenHits > 0 && (
-                        <span className="hidden-hits" title="Удары между делениями">
-                          {hiddenHits}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="track-block" key={instrument}>
+                <div className={`mobile-track-name ${instrument}`}>
+                  {INSTRUMENT_DETAILS[instrument].name}
+                </div>
+                <div
+                  className={`track-row ${instrument}`}
+                  style={{ gridTemplateColumns: `repeat(${steps}, 1fr)` }}
+                >
+                  {Array.from({ length: steps }, (_, i) => {
+                    const tick = barStart + i * step;
+                    const key = eventId(instrument, tick);
+                    const hit = cells.hits.get(key);
+                    const hiddenHits = cells.hidden.get(key) ?? 0;
+                    const active = playing && position >= tick && position < tick + step;
+                    const strength = hit ? strengthOf(hit.velocity) : null;
+                    return (
+                      <button
+                        key={tick}
+                        type="button"
+                        data-cell="true"
+                        data-instrument={instrument}
+                        data-tick={tick}
+                        className={`step ${fillRange && tick >= fillRange.start && tick < fillRange.end && fillRange.tracks.includes(instrument) ? 'fill-selected' : ''} ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (steps / 4) === 0 ? 'downbeat' : ''}`}
+                        aria-label={`${INSTRUMENT_DETAILS[instrument].name}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
+                        aria-pressed={!!hit}
+                        onPointerDown={(e) => pointerDown(e, instrument, tick, !!hit)}
+                        onPointerMove={pointerMove}
+                        onPointerUp={pointerUp}
+                        onPointerCancel={() => {
+                          start.current = null;
+                          suppressClick.current = true;
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                        }}
+                        onClick={() => {
+                          if (suppressClick.current) {
+                            suppressClick.current = false;
+                            return;
+                          }
+                          activate(instrument, tick);
+                        }}
+                      >
+                        {hit ? (
+                          <span className="hit-dot">{strength === 'accent' ? '›' : ''}</span>
+                        ) : (
+                          <span className="empty-dot" />
+                        )}
+                        {hiddenHits > 0 && (
+                          <span className="hidden-hits" title="Удары между делениями">
+                            {hiddenHits}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>

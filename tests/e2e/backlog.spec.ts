@@ -131,5 +131,40 @@ for (const width of [360, 390, 430, 844, 1280])
         .first()
         .evaluate((el) => el.getBoundingClientRect().width),
     ).toBeGreaterThanOrEqual(44);
+    if (width <= 760) {
+      await expect(page.locator('.track-labels')).toBeHidden();
+      const header = page.locator('.mobile-track-name').last();
+      await expect(header).toHaveText('Бочка');
+      const geometry = await page
+        .locator('.track-block')
+        .last()
+        .evaluate((block) => {
+          const label = block.querySelector('.mobile-track-name')!.getBoundingClientRect();
+          const row = block.querySelector('.track-row')!.getBoundingClientRect();
+          const scroll = document.querySelector('.grid-scroll')!;
+          const cell = block.querySelector('.step')!.getBoundingClientRect();
+          return {
+            labelBottom: label.bottom,
+            rowTop: row.top,
+            notesWidth: scroll.clientWidth,
+            visible: Math.floor((scroll.clientWidth + 5) / (cell.width + 5)),
+          };
+        });
+      expect(geometry.labelBottom).toBeLessThanOrEqual(geometry.rowTop);
+      expect(geometry.notesWidth).toBeGreaterThanOrEqual(width - 12);
+      expect(geometry.visible).toBeGreaterThanOrEqual(width === 360 ? 7 : width === 390 ? 7 : 8);
+      await page.locator('.grid-scroll').evaluate((el) => {
+        el.scrollLeft = 100;
+      });
+      const alignment = await header.evaluate(
+        (el) =>
+          el.getBoundingClientRect().left -
+          document.querySelector('.grid-scroll')!.getBoundingClientRect().left,
+      );
+      expect(Math.abs(alignment)).toBeLessThanOrEqual(1);
+    } else {
+      await expect(page.locator('.track-labels')).toBeVisible();
+      await expect(page.locator('.mobile-track-name').first()).toBeHidden();
+    }
     await page.screenshot({ path: info.outputPath('full-kit-' + width + '.png'), fullPage: true });
   });
