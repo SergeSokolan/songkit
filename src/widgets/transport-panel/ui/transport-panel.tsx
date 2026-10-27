@@ -44,7 +44,8 @@ export function TransportPanel({
           title="В начало"
           onClick={onReset}
         >
-          <Icon name="stop" />
+          <Icon name="undo" />
+          <span>В начало</span>
         </button>
       </div>
     </section>

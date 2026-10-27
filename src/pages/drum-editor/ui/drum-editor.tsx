@@ -1,7 +1,10 @@
+import { GroovePanel } from '../../../features/manage-grooves';
 import { FillPanel, applyFill, type Fill, type FillRange } from '../../../features/manage-fills';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BAR_TICKS,
+  GRIDS,
+  gridLabel,
   addInstrument,
   createPattern,
   demoPattern,
@@ -13,7 +16,6 @@ import {
   totalTicks,
   type Draft,
   type EditorView,
-  type Grid,
   type Instrument,
 } from '../../../entities/drum-pattern';
 import { usePattern } from '../../../features/edit-pattern';
@@ -62,7 +64,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
       view: {
         ...view,
         bar: Math.floor(range.start / BAR_TICKS),
-        grid: 16,
+        grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
         scrollLeft: ((range.start % BAR_TICKS) / 240) * 48,
       },
     });
@@ -275,7 +277,10 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
                   className={`bar-tab ${visibleBar === i ? 'selected' : ''} ${playback.playing && Math.floor(playback.position / BAR_TICKS) === i ? 'sounding' : ''}`}
                   aria-label={`Такт ${i + 1}`}
                   aria-pressed={visibleBar === i}
-                  onClick={() => changeEditorView((v) => ({ ...v, bar: i, scrollLeft: 0 }))}
+                  onClick={() => {
+                    setFillPreview(null);
+                    setView((v) => ({ ...v, bar: i, scrollLeft: 0 }));
+                  }}
                 >
                   <span className="small">ТАКТ</span>
                   <strong>{String(i + 1).padStart(2, '0')}</strong>
@@ -311,14 +316,14 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             <div className="grid-controls">
               <span>Сетка</span>
               <div className="segmented" aria-label="Деление сетки">
-                {([4, 8, 16, 32] as Grid[]).map((grid) => (
+                {GRIDS.map((grid) => (
                   <button
                     key={grid}
                     aria-pressed={editorView.grid === grid}
                     className={editorView.grid === grid ? 'selected' : ''}
                     onClick={() => changeEditorView((v) => ({ ...v, grid, scrollLeft: 0 }))}
                   >
-                    1/{grid}
+                    {gridLabel(grid)}
                   </button>
                 ))}
               </div>
@@ -329,7 +334,8 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             onAdd={(instrument) => change((p) => addInstrument(p, instrument))}
           />
           <FillPanel
-            key={pattern.barCount}
+            bar={bar}
+            key={`fills-${pattern.barCount}`}
             pattern={pattern}
             previewing={!!activePreview}
             activeId={activePreview?.fillId}
@@ -343,6 +349,38 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
               }
             }}
           />
+          <GroovePanel
+            bar={bar}
+            key={pattern.barCount}
+            pattern={pattern}
+            activeId={activePreview?.fillId}
+            onPreview={previewFill}
+            onCancel={() => setFillPreview(null)}
+            onApply={() => {
+              if (activePreview) {
+                change(() => activePreview.pattern);
+                setView(activePreview.view);
+                setFillPreview(null);
+              }
+            }}
+          />
+          <div className="grid-transport" aria-label="Транспорт у сетки">
+            <button
+              className="secondary-button"
+              disabled={playback.loading}
+              onClick={playback.playing ? playback.stop : () => void playback.play()}
+            >
+              <Icon name={playback.playing ? 'pause' : 'play'} />
+              {playback.loading
+                ? 'Подготовка звука'
+                : playback.playing
+                  ? 'Пауза у сетки'
+                  : 'Играть у сетки'}
+            </button>
+            <span>
+              {playback.error ? 'Ошибка звука' : activePreview ? 'Предпросмотр' : 'Партия'} · 4/4
+            </span>
+          </div>
           <fieldset
             disabled={!!activePreview}
             className="preview-grid"
@@ -378,7 +416,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
                 Акцент
               </span>
             </div>
-            <span className="grid-hint">Нажмите — удар · удерживайте — сила</span>
+            <span className="grid-hint">Касания: пусто → обычный → тихий → пусто</span>
           </div>
           <div className="card-bottom">
             <span className="save-status" role="status">
@@ -428,7 +466,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
           <div>
             <span className="help-index">01 /</span>
             <h2>Соберите основу</h2>
-            <p>Бочка, малый и хэт. Касайтесь клеток, чтобы поставить или убрать удар.</p>
+            <p>Бочка, малый и хэт. Касайтесь клетки: обычный удар, тихий удар, затем удаление.</p>
           </div>
           <div>
             <span className="help-index">02 /</span>
@@ -438,7 +476,10 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
           <div>
             <span className="help-index">03 /</span>
             <h2>Почувствуйте динамику</h2>
-            <p>Удерживайте удар: тихий, обычный или акцент. Меняйте рисунок прямо во время игры.</p>
+            <p>
+              Повторное касание делает удар тихим. Перенос доступен через «Изменить / перенести
+              удар».
+            </p>
           </div>
         </section>
         <div className="workspace-actions">

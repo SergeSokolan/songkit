@@ -1,46 +1,25 @@
-import { useMemo, useState } from 'react';
-import {
-  PPQ,
-  INSTRUMENTS,
-  INSTRUMENT_DETAILS,
-  totalTicks,
-  type Pattern,
-  type Instrument,
-} from '../../../entities/drum-pattern';
-import { FILL_LIBRARY, libraryFill, suggestFills, type Fill, type FillRange } from '../model/fills';
+import { useState } from 'react';
+import { INSTRUMENT_DETAILS, type Pattern } from '../../../entities/drum-pattern';
+import { catalogFill, FILL_CATALOG, GENRES } from '../model/catalog';
+import type { Fill, FillRange } from '../model/fills';
+import { AdvancedFillPanel } from './advanced-fill-panel';
 interface Props {
   pattern: Pattern;
+  bar: number;
   onPreview: (fill: Fill, range: FillRange, allowMissing: boolean) => void;
   onApply: () => void;
   onCancel: () => void;
   previewing: boolean;
   activeId?: string;
 }
-function boundaryLabel(beat: number) {
-  const whole = Math.floor(beat);
-  const sub = Math.round((beat - whole) * 8);
-  return `Такт ${Math.floor(whole / 4) + 1}, доля ${(whole % 4) + 1}${sub ? ` + ${sub}/8 доли` : ''}`;
-}
-export function FillPanel({ pattern, onPreview, onApply, onCancel, previewing, activeId }: Props) {
+export function FillPanel(props: Props) {
+  const { pattern, bar, onPreview, onApply, onCancel, previewing, activeId } = props;
   const [open, setOpen] = useState(false);
-  const [start, setStart] = useState(Math.max(0, totalTicks(pattern) / PPQ - 2));
-  const [end, setEnd] = useState(totalTicks(pattern) / PPQ);
-  const [tracks, setTracks] = useState<Instrument[]>(['snare', 'hat']);
-  const [style, setStyle] = useState('rock');
-  const [seed, setSeed] = useState(1);
+  const [genre, setGenre] = useState('rock');
+  const [beats, setBeats] = useState(2);
   const [allowMissing, setAllowMissing] = useState(false);
-  const range = useMemo(
-    () => ({ start: start * PPQ, end: end * PPQ, tracks }),
-    [start, end, tracks],
-  );
-  const valid = start < end && end <= totalTicks(pattern) / PPQ && tracks.length > 0;
-  const generated = useMemo(
-    () => (valid ? suggestFills(pattern, range, seed, style) : []),
-    [pattern, range, seed, style, valid],
-  );
-  const invalidate = () => onCancel();
   return (
-    <section className="fills-panel" aria-label="Брейки">
+    <section className="fills-panel" aria-label="Каталог брейков">
       <button
         className="secondary-button"
         aria-expanded={open}
@@ -53,160 +32,103 @@ export function FillPanel({ pattern, onPreview, onApply, onCancel, previewing, a
       </button>
       {open && (
         <div className="fills-content">
-          <h2>Брейк внутри фразы</h2>
-          <p>Заменяются только выбранные дорожки внутри участка. Остальная партия сохраняется.</p>
-          <p className="small">
-            Участок: {boundaryLabel(start)} →{' '}
-            {end === totalTicks(pattern) / PPQ ? 'конец фразы' : boundaryLabel(end)}. Длина:{' '}
-            {Math.max(0, end - start)} доли. Для всех мелких ударов выберите сетку 1/32.
+          <h2>Брейк · такт {bar + 1}</h2>
+          <p>
+            Последние {beats} {beats === 1 ? 'доля' : 'доли'} выбранного такта. Каждая карточка —
+            законченная фраза в 4/4.
           </p>
           <div className="fill-options">
             <label>
-              От доли
+              Жанр брейка
               <select
-                aria-label="Начало брейка"
-                value={start}
+                aria-label="Жанр брейка"
+                value={genre}
                 onChange={(e) => {
-                  invalidate();
-                  setStart(Number(e.target.value));
+                  onCancel();
+                  setGenre(e.target.value);
                 }}
               >
-                {Array.from({ length: totalTicks(pattern) / 120 }, (_, i) => (
-                  <option key={i} value={i / 8}>
-                    {boundaryLabel(i / 8)}
+                {Object.entries(GENRES).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              До границы
+              Длительность брейка
               <select
-                aria-label="Конец брейка"
-                value={end}
+                aria-label="Длительность брейка"
+                value={beats}
                 onChange={(e) => {
-                  invalidate();
-                  setEnd(Number(e.target.value));
+                  onCancel();
+                  setBeats(Number(e.target.value));
                 }}
               >
-                {Array.from({ length: totalTicks(pattern) / 120 }, (_, i) => (
-                  <option key={i + 1} value={(i + 1) / 8}>
-                    {(i + 1) / 8 === totalTicks(pattern) / PPQ
-                      ? 'Конец фразы'
-                      : boundaryLabel((i + 1) / 8)}
+                {[1, 2, 4].map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? '¼' : n === 2 ? '½' : '1'} такт
                   </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Стиль
-              <select
-                value={style}
-                onChange={(e) => {
-                  invalidate();
-                  setStyle(e.target.value);
-                }}
-              >
-                {['rock', 'pop', 'funk'].map((s) => (
-                  <option key={s}>{s}</option>
                 ))}
               </select>
             </label>
           </div>
-          <fieldset>
-            <legend>Дорожки замены</legend>
-            <div className="fill-tracks">
-              {INSTRUMENTS.map((t) => (
-                <label key={t}>
-                  <input
-                    type="checkbox"
-                    checked={tracks.includes(t)}
-                    onChange={() => {
-                      invalidate();
-                      setTracks(
-                        tracks.includes(t) ? tracks.filter((x) => x !== t) : [...tracks, t],
-                      );
-                    }}
-                  />
-                  {INSTRUMENT_DETAILS[t].name}
-                  {!pattern.instruments.includes(t) ? ' (добавить)' : ''}
-                </label>
-              ))}
-            </div>
-          </fieldset>
           <label>
             <input
               type="checkbox"
               checked={allowMissing}
               onChange={(e) => {
-                invalidate();
+                onCancel();
                 setAllowMissing(e.target.checked);
               }}
             />{' '}
-            Разрешаю добавить недостающие выбранные инструменты при применении
+            Добавить недостающие дорожки при применении
           </label>
-          {!valid && <p role="alert">Выберите конец после начала и хотя бы одну дорожку.</p>}
-          <h3>Под мой бит</h3>
           <div className="fill-candidates">
-            {generated.map((f) => (
-              <button
-                className="secondary-button"
-                key={f.id}
-                aria-pressed={activeId === f.id}
-                onClick={() => onPreview(f, range, false)}
-              >
-                {f.name} · {f.density}
-              </button>
-            ))}
-            <button
-              className="secondary-button"
-              disabled={!valid}
-              onClick={() => {
-                invalidate();
-                setSeed(seed + 1);
-              }}
-            >
-              Другие варианты
-            </button>
-          </div>
-          {valid && generated.length < 3 && (
-            <p>Для этого участка и дорожек доступно меньше трёх различных вариантов.</p>
-          )}
-          <h3>Библиотека · {style}</h3>
-          <div className="fill-candidates">
-            {FILL_LIBRARY.filter((f) => f.style === style).map((t) => {
-              const fill = valid ? libraryFill(pattern, range, t.id) : null;
-              const missing = fill?.events.some((e) => !pattern.instruments.includes(e.instrument));
+            {FILL_CATALOG.filter((c) => c.style === genre && c.beats === beats).map((card) => {
+              const { fill, range } = catalogFill(pattern, bar, card.id);
+              const missing = range.tracks.filter((t) => !pattern.instruments.includes(t));
               return (
-                <button
-                  className="secondary-button"
-                  key={t.id}
-                  aria-pressed={activeId === t.id}
-                  disabled={!fill?.events.length || (!!missing && !allowMissing)}
-                  onClick={() => fill && onPreview(fill, range, allowMissing)}
-                >
-                  {t.name} · {t.density}
-                </button>
+                <article className="pattern-card" key={card.id}>
+                  <h3>{card.name}</h3>
+                  <p>
+                    {card.scheme} · {card.density}
+                  </p>
+                  <p>{range.tracks.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}</p>
+                  {missing.length > 0 && (
+                    <p>
+                      Нужны дорожки: {missing.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}
+                    </p>
+                  )}
+                  <button
+                    className="secondary-button"
+                    disabled={missing.length > 0 && !allowMissing}
+                    aria-pressed={activeId === card.id}
+                    onClick={() => onPreview(fill, range, allowMissing)}
+                  >
+                    Прослушать: {card.name}
+                  </button>
+                </article>
               );
             })}
           </div>
           <p className="small">
-            Оригинальные шаблоны SongKit, CC0. Длительность подстраивается к участку без изменения
-            размера.
+            Учебные адаптации SongKit, CC0. S — малый, H — хэт, K — бочка, R/L — руки; скобки —
+            тихий удар. Прослушивание: выберите карточку, затем «Играть».
           </p>
-          {previewing && (
+          {previewing && activeId && FILL_CATALOG.some((c) => c.id === activeId) && (
             <div className="inline-notice" role="status">
-              Предпросмотр: нажмите «Играть». При воспроизведении вариант вступит со следующего
-              начала участка. Экспорт и сохранение используют подтверждённую партию.
-              <div className="fill-candidates">
-                <button className="secondary-button" onClick={onApply}>
-                  Применить брейк
-                </button>
-                <button className="secondary-button" onClick={onCancel}>
-                  Отменить предпросмотр
-                </button>
-              </div>
+              Предпросмотр не сохраняется. Заменяются перечисленные дорожки в конце такта {bar + 1};
+              остальная партия сохраняется.
+              <button className="secondary-button" onClick={onApply}>
+                Применить брейк
+              </button>
+              <button className="secondary-button" onClick={onCancel}>
+                Отменить предпросмотр
+              </button>
             </div>
           )}
+          <AdvancedFillPanel {...props} />
         </div>
       )}
     </section>

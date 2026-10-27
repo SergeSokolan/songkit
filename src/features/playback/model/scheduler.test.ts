@@ -69,11 +69,12 @@ describe('audio-clock scheduling', () => {
     const f = fixture(setHit(createPattern(), 'kick', 0, 80));
     f.scheduler.start();
     f.setTime(0.19);
-    expect(f.scheduler.currentPosition()).toBe(0);
+    expect(f.scheduler.currentPosition()).toBe(40);
     f.scheduler.pump();
     f.setTime(0.2);
     const stopped = f.scheduler.stop();
-    expect(stopped).toBe(240);
+    // Position now advances in 40-tick steps to cover straight and triplet events.
+    expect(stopped).toBe(280);
     expect(f.silence).toHaveBeenCalledTimes(1);
     expect(f.scheduler.isRunning()).toBe(false);
     const n = f.hits.length;
@@ -110,4 +111,14 @@ describe('audio-clock scheduling', () => {
     f.advance(2.3);
     expect(f.hits).toHaveLength(0);
   });
+});
+
+it('schedules sextuplets and mixed straight notes at exact audio times', () => {
+  let p = setTempo(createPattern(), 120);
+  for (const tick of [0, 120, 160, 320, 480, 640, 800]) p = setHit(p, 'snare', tick, 80);
+  const f = fixture(p);
+  f.scheduler.start();
+  f.advance(0.5);
+  expect(f.hits.map((e) => e.tick)).toEqual([0, 120, 160, 320, 480, 640, 800]);
+  for (const e of f.hits) expect(e.time).toBeCloseTo(0.025 + (e.tick / 960) * 0.5, 8);
 });

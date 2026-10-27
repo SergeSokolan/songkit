@@ -36,10 +36,7 @@ test('edit fine notes, dynamics, undo and restore across reload', async ({ page 
   await page.getByRole('button', { name: 'Новая партия', exact: true }).click();
   await page.getByRole('button', { name: '1/32', exact: true }).click();
   await page.getByRole('button', { name: 'Малый, такт 1, шаг 2, пусто', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Малый, такт 1, шаг 2, Обычный', exact: true })
-    .click({ button: 'right' });
-  await page.getByRole('button', { name: 'Тихий, сила 35' }).click();
+  await page.getByRole('button', { name: 'Малый, такт 1, шаг 2, Обычный', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Малый, такт 1, шаг 2, Тихий', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
@@ -189,9 +186,9 @@ test('adds the full kit in height order, undoes additions, restores and plays of
     'Крэш 1',
     'Райд',
     'Хай-хэт',
-    'Том 3',
-    'Том 2',
     'Том 1',
+    'Том 2',
+    'Том 3',
     'Малый',
     'Бочка',
   ];
@@ -268,7 +265,7 @@ test('shows the GitHub source link and release version', async ({ page }) => {
   await expect(link).toHaveAttribute('href', 'https://github.com/SergeSokolan/songkit');
   await expect(link).toHaveAttribute('target', '_blank');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-  await expect(page.locator('.app-version')).toHaveText('v0.3.0');
+  await expect(page.locator('.app-version')).toHaveText('v0.4.0');
 });
 
 test('requests music playback routing and can restore sound without changing the groove', async ({
@@ -354,6 +351,9 @@ test('four-bar fill preview cancels, adds toms atomically and survives offline r
 }) => {
   await page.getByLabel('Количество тактов').selectOption('4');
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page
+    .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
+    .click();
   await expect(page.getByLabel('Начало брейка')).toHaveValue('14');
   await page.getByRole('button', { name: 'Свободнее · Редкий' }).click();
   await expect(page.getByRole('button', { name: 'Применить брейк' })).toBeVisible();
@@ -385,6 +385,9 @@ test('four-bar fill preview cancels, adds toms atomically and survives offline r
   await page.reload();
   await expect(page.getByRole('button', { name: /Том 3, такт 4, шаг 15/ })).toBeVisible();
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page
+    .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
+    .click();
   await expect(page.getByRole('button', { name: 'Свободнее · Редкий' })).toBeEnabled();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'MIDI', exact: true }).click();
@@ -395,6 +398,9 @@ test('editing the confirmed bit invalidates an unapplied fill even after undo', 
   page,
 }) => {
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page
+    .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
+    .click();
   await page.getByRole('button', { name: 'Движение · Средний' }).click();
   await page.getByRole('button', { name: 'Увеличить темп' }).click();
   await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
@@ -408,6 +414,9 @@ test('unapplied preview preserves the saved pattern and editor view across reloa
   await page.getByLabel('Количество тактов').selectOption('4');
   await expect(page.getByText('Черновик на устройстве', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
+  await page
+    .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
+    .click();
   await page.getByRole('button', { name: 'Разгон · Плотный' }).click();
   await expect(page.getByRole('button', { name: 'Такт 4', exact: true })).toHaveAttribute(
     'aria-pressed',

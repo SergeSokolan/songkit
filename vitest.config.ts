@@ -12,6 +12,8 @@ export default defineConfig({
       include: [
         'src/entities/drum-pattern/model/**/*.ts',
         'src/features/manage-fills/model/fills.ts',
+        'src/features/manage-fills/model/catalog.ts',
+        'src/features/manage-grooves/model/grooves.ts',
         'src/features/playback/model/audition.ts',
       ],
       exclude: ['**/*.test.ts'],

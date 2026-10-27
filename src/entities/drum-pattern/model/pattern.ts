@@ -6,9 +6,9 @@ export const BAR_TICKS = PPQ * 4;
 export const INSTRUMENTS = [
   'kick',
   'snare',
-  'tom1',
-  'tom2',
   'tom3',
+  'tom2',
+  'tom1',
   'hat',
   'ride',
   'crash1',
@@ -29,7 +29,18 @@ export const INSTRUMENT_DETAILS = {
 export type Instrument = (typeof INSTRUMENTS)[number];
 export const VELOCITIES = { ghost: 35, normal: 80, accent: 115 } as const;
 export type Strength = keyof typeof VELOCITIES;
-export type Grid = 4 | 8 | 16 | 32;
+export const GRIDS = [4, 8, 16, 32, '8T', '16T'] as const;
+export type Grid = (typeof GRIDS)[number];
+export function gridSteps(grid: Grid): number {
+  return grid === '8T' ? 12 : grid === '16T' ? 24 : grid;
+}
+export function gridLabel(grid: Grid): string {
+  return '1/' + grid;
+}
+// Union of supported straight and triplet positions, not arbitrary 40-tick tuplets.
+function validTick(tick: number): boolean {
+  return tick % 120 === 0 || tick % 160 === 0;
+}
 export interface DrumEvent {
   id: string;
   instrument: Instrument;
@@ -86,7 +97,7 @@ export function totalTicks(pattern: Pattern): number {
   return BAR_TICKS * pattern.barCount;
 }
 export function gridTicks(grid: Grid): number {
-  return (PPQ * 4) / grid;
+  return BAR_TICKS / gridSteps(grid);
 }
 export function strengthOf(velocity: number): Strength {
   return velocity < 58 ? 'ghost' : velocity < 98 ? 'normal' : 'accent';
@@ -103,7 +114,7 @@ export function setHit(
     !Number.isInteger(tick) ||
     tick < 0 ||
     tick >= totalTicks(pattern) ||
-    tick % 120 !== 0
+    !validTick(tick)
   )
     throw new Error('Недопустимая позиция удара');
   if (velocity !== null && (!Number.isInteger(velocity) || velocity < 1 || velocity > 127))
@@ -162,7 +173,7 @@ export function parsePattern(value: unknown): Pattern {
     Number(p.barCount) < 1 ||
     Number(p.barCount) > 4 ||
     !Array.isArray(p.events) ||
-    p.events.length > 1152
+    p.events.length > 1728
   )
     throw new Error('Неподдерживаемый формат проекта');
   let instruments: Instrument[];
@@ -178,7 +189,7 @@ export function parsePattern(value: unknown): Pattern {
     const active = p.instruments;
     instruments = INSTRUMENTS.filter((item) => active.includes(item));
   }
-  if (p.events.length > Number(p.barCount) * 32 * instruments.length)
+  if (p.events.length > Number(p.barCount) * 48 * instruments.length)
     throw new Error('Слишком много ударов');
   const seen = new Set<string>();
   const events: DrumEvent[] = p.events.map((item: unknown) => {
@@ -190,7 +201,7 @@ export function parsePattern(value: unknown): Pattern {
       !Number.isInteger(e.tick) ||
       Number(e.tick) < 0 ||
       Number(e.tick) >= Number(p.barCount) * BAR_TICKS ||
-      Number(e.tick) % 120 !== 0 ||
+      !validTick(Number(e.tick)) ||
       !Number.isInteger(e.velocity) ||
       Number(e.velocity) < 1 ||
       Number(e.velocity) > 127
@@ -223,8 +234,7 @@ export function parseDraft(value: unknown): Draft {
     !Number.isInteger(v.bar) ||
     Number(v.bar) < 0 ||
     Number(v.bar) >= pattern.barCount ||
-    !Number.isInteger(v.grid) ||
-    ![4, 8, 16, 32].includes(Number(v.grid)) ||
+    !GRIDS.includes(v.grid as Grid) ||
     !Number.isInteger(v.position) ||
     Number(v.position) < 0 ||
     Number(v.position) >= totalTicks(pattern) ||
@@ -238,7 +248,7 @@ export function parseDraft(value: unknown): Draft {
     pattern,
     view: {
       bar: Number(v.bar),
-      grid: Number(v.grid) as Grid,
+      grid: v.grid as Grid,
       position: Number(v.position),
       scrollLeft: v.scrollLeft,
     },

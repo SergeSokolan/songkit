@@ -1527,3 +1527,109 @@ input[type='range'] {
   border-color: var(--green);
   background: #35432e;
 }
+/* Grid actions stay reachable while editing the entire kit. */
+.grid-transport {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #20231f;
+  border-bottom: 1px solid var(--line);
+}
+.grid-transport button,
+.reset-button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.reset-button {
+  width: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.step,
+.beat-ruler,
+.track-labels {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.step {
+  touch-action: manipulation;
+  min-width: 44px;
+}
+.grid-controls,
+.grid-toolbar {
+  flex-wrap: wrap;
+}
+.segmented {
+  flex-wrap: wrap;
+}
+.segmented button {
+  min-height: 44px;
+  min-width: 44px;
+}
+@media (max-width: 760px) {
+  .app-shell {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  .sequencer {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .track-labels {
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .track-label {
+    justify-content: center;
+    gap: 0;
+  }
+  .track-label svg,
+  .track-label span {
+    display: none;
+  }
+  .track-label strong {
+    font-size: 0;
+  }
+  .track-label strong::after {
+    content: attr(data-short);
+    font-size: 10px;
+  }
+  .grid-toolbar {
+    gap: 8px;
+    padding: 12px 8px;
+  }
+  .grid-controls {
+    gap: 6px;
+  }
+  .grid-transport {
+    padding: 6px 8px;
+  }
+  .grid-transport span {
+    font-size: 11px;
+  }
+}
+
+.pattern-card {
+  flex: 1 1 220px;
+  border: 1px solid var(--line);
+  padding: 16px;
+  border-radius: 12px;
+  min-width: 0;
+}
+.pattern-card h3 {
+  margin-top: 0;
+}
+.fills-panel select {
+  min-height: 44px;
+}
+
+.editor-card {
+  overflow: clip;
+}
