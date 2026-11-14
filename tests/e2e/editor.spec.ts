@@ -7,9 +7,9 @@ async function startOrCheckUnsupported(page: Page) {
   if (supported)
     await expect(page.getByRole('button', { name: 'Пауза', exact: true })).toBeVisible();
   else
-    await expect(page.getByRole('alert')).toContainText(
-      'В этом браузере недоступно воспроизведение',
-    );
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'В этом браузере недоступно воспроизведение' }),
+    ).toBeVisible();
   return supported;
 }
 test.beforeEach(async ({ page }) => {
@@ -334,7 +334,10 @@ test('requests music playback routing and can restore sound without changing the
         () => (window as typeof window & { __audioContexts: number }).__audioContexts,
       ),
     ).toBe(2);
-  } else await expect(page.getByRole('alert')).toContainText('недоступно воспроизведение');
+  } else
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'недоступно воспроизведение' }),
+    ).toBeVisible();
   expect(
     await page
       .locator('.step[aria-pressed=true]')
