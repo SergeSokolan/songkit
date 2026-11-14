@@ -6,7 +6,7 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
-## [0.4.1-rc.1] — 2026-11-14
+## [0.4.1] — 2026-11-14
 
 ### Исправлено
 
@@ -102,8 +102,8 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...HEAD
-[0.4.1-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1-rc.1
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
 [0.4.0]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0
