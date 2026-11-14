@@ -149,9 +149,35 @@ test('bar reduction warns, is undoable, and invalid import preserves work', asyn
     buffer: Buffer.from('{"schemaVersion":99}'),
   });
   await expect(
-    page.getByRole('status').filter({ hasText: 'Неподдерживаемый формат' }),
+    page.getByRole('alert').filter({ hasText: 'Неподдерживаемый формат' }),
   ).toBeVisible();
   await expect(page.getByLabel('Количество тактов')).toHaveValue('2');
+});
+test('import feedback is in view and the same file can be retried', async ({ page }) => {
+  const note = page.getByRole('button', { name: 'Бочка, такт 1, шаг 2, пусто', exact: true });
+  await note.click();
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 664 });
+    for (const [content, message] of [
+      ['{', 'Файл не удалось прочитать как JSON'],
+      ['{}', 'Неподдерживаемый формат'],
+      ['{', 'Файл не удалось прочитать как JSON'],
+    ]) {
+      const pending = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Открыть проект' }).click();
+      const chooser = await pending;
+      await chooser.setFiles({
+        name: 'bad.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(content),
+      });
+      const alert = page.getByRole('alert').filter({ hasText: message });
+      await expect(alert).toBeInViewport({ ratio: 1 });
+      await expect(
+        page.getByRole('button', { name: 'Бочка, такт 1, шаг 2, Обычный', exact: true }),
+      ).toHaveCount(1);
+    }
+  }
 });
 test('mobile-sized layout keeps page inside viewport', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
