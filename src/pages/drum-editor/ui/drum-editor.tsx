@@ -72,7 +72,12 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
   const [view, setView] = useState<EditorView>(initial?.view ?? defaultView);
   const [saveEnabled, setSaveEnabled] = useState(!recoveryError);
   const [notice, setNotice] = useState('');
+  const [importError, setImportError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const importAlertRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (importError) importAlertRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [importError]);
   const bar = Math.min(view.bar, pattern.barCount - 1);
   const editorView = activePreview?.view ?? view;
   const visibleBar = Math.min(editorView.bar, pattern.barCount - 1);
@@ -141,6 +146,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
     setNotice('Новая партия. Очистку нот можно отменить.');
   };
   const loadFile = async (file: File) => {
+    setImportError('');
     try {
       const imported = await importProject(file);
       if (
@@ -157,7 +163,11 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
           : 'Проект открыт. Автосохранение заблокировано: старый черновик сохранён для восстановления.',
       );
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Не удалось открыть проект');
+      setImportError(
+        error instanceof Error && error.name === 'Error'
+          ? error.message
+          : 'Не удалось открыть проект',
+      );
     }
   };
   return (
@@ -456,6 +466,13 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
                 e.target.value = '';
               }}
             />
+            <div className="import-feedback" ref={importAlertRef} role="alert">
+              {importError && (
+                <p className="inline-notice warning">
+                  {importError}. Выберите другой файл проекта SongKit.
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <section className="help-row">

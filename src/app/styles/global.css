@@ -691,8 +691,19 @@ input[type='range'] {
 }
 .file-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+.import-feedback {
+  flex-basis: 100%;
+  scroll-margin-block: 8px;
+}
+.import-feedback:empty {
+  position: absolute;
+}
+.import-feedback .inline-notice {
+  margin: 0;
 }
 .secondary-button {
   display: inline-flex;

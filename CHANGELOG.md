@@ -6,6 +6,12 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
+## [0.4.1] — 2026-11-14
+
+### Исправлено
+
+- Ошибка открытия проекта на русском показывается рядом с файловыми действиями. Текущая партия сохраняется, файл можно выбрать повторно ([#22](https://github.com/SergeSokolan/songkit/issues/22)).
+
 ## [0.4.0] — 2026-10-28
 
 Стабильный выпуск принятого кандидата 0.4.0-rc.1. Пользователь разрешил применение на main; [PR #18](https://github.com/SergeSokolan/songkit/pull/18) объединён. Версия пакета и скриншоты обновлены до 0.4.0, функциональный состав сохранён.
@@ -96,7 +102,8 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
 [0.4.0]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0

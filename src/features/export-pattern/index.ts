@@ -10,5 +10,12 @@ export function exportProject(pattern: Pattern) {
 }
 export async function importProject(file: File): Promise<Pattern> {
   if (file.size > 1024 * 1024) throw new Error('Файл больше 1 МБ');
-  return parsePattern(JSON.parse(await file.text()));
+  const text = await file.text();
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('Файл не удалось прочитать как JSON');
+  }
+  return parsePattern(data);
 }
