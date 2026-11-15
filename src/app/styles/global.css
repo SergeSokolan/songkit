@@ -800,16 +800,29 @@ input[type='range'] {
 .sheet-backdrop {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
   background: #0008;
-  z-index: 10;
-  display: flex;
+  color: inherit;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
+.sheet-backdrop[open] {
+  display: flex;
+}
+.sheet-backdrop::backdrop {
+  background: transparent;
+}
 .strength-sheet {
   width: 390px;
   max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
   background: #272e22;
   border: 1px solid #56634a;
   border-radius: 18px;
