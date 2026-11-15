@@ -5,9 +5,22 @@ interface Props {
   onTempo: (tempo: number) => void;
 }
 const ROW = 48;
+const TEMPO_ERROR = `Введите целое число (${MIN}–${MAX} BPM).`;
+
+function parseTempo(value: string): number | null {
+  const text = value.trim();
+  const tempo = Number(text);
+  return /^\d+$/.test(text) && tempo >= MIN && tempo <= MAX ? tempo : null;
+}
+
 export function TempoControl({ tempo, onTempo }: Props) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(tempo);
+  const [mainText, setMainText] = useState<string | null>(null);
+  const [mainInvalid, setMainInvalid] = useState(false);
+  const [pickerText, setPickerText] = useState<string | null>(null);
+  const [pickerInvalid, setPickerInvalid] = useState(false);
+  const mainInput = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const wheel = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,12 +51,22 @@ export function TempoControl({ tempo, onTempo }: Props) {
       wheel.current?.scrollTo({ top: (latest.current.tempo - MIN) * ROW });
     } else dialog.current?.close();
   }, [open]);
-  const step = (direction: number) => {
-    const next = Math.max(MIN, Math.min(MAX, latest.current.tempo + direction));
+  const commitTempo = (next: number) => {
     if (next !== latest.current.tempo) {
       latest.current.onTempo(next);
       latest.current = { ...latest.current, tempo: next };
     }
+  };
+  const finishMainInput = () => {
+    if (mainText === null) return;
+    const next = parseTempo(mainText);
+    setMainText(null);
+    setMainInvalid(next === null);
+    if (next !== null) commitTempo(next);
+  };
+  const step = (direction: number) => {
+    setMainInvalid(false);
+    commitTempo(Math.max(MIN, Math.min(MAX, latest.current.tempo + direction)));
   };
   const hold = (direction: number) => {
     stop();
@@ -54,10 +77,25 @@ export function TempoControl({ tempo, onTempo }: Props) {
     };
     timer.current = setTimeout(repeat, 450);
   };
+  const setWheelDraft = (value: number) => {
+    setDraft(value);
+    setPickerText(null);
+    setPickerInvalid(false);
+  };
   const select = (value: number) => {
     const next = Math.max(MIN, Math.min(MAX, value));
-    setDraft(next);
+    setWheelDraft(next);
     wheel.current?.scrollTo({ top: (next - MIN) * ROW });
+  };
+  const confirm = () => {
+    const next = pickerText === null ? draft : parseTempo(pickerText);
+    if (next === null) {
+      setPickerInvalid(true);
+      return;
+    }
+    commitTempo(next);
+    setMainInvalid(false);
+    setOpen(false);
   };
   return (
     <div className="tempo-control">
@@ -72,6 +110,7 @@ export function TempoControl({ tempo, onTempo }: Props) {
             onPointerDown={(e) => {
               if (e.button !== 0) return;
               e.preventDefault();
+              mainInput.current?.blur();
               e.currentTarget.setPointerCapture(e.pointerId);
               hold(direction);
             }}
@@ -87,21 +126,26 @@ export function TempoControl({ tempo, onTempo }: Props) {
         ))}
         <div className="tempo-value">
           <input
+            ref={mainInput}
             aria-label="Темп BPM"
-            type="number"
-            min={MIN}
-            max={MAX}
-            value={tempo}
+            aria-describedby={mainInvalid ? 'tempo-input-status' : undefined}
+            inputMode="numeric"
+            enterKeyHint="done"
+            value={mainText ?? String(tempo)}
             onChange={(e) => {
-              const n = Number(e.target.value);
-              if (Number.isInteger(n) && n >= MIN && n <= MAX) onTempo(n);
+              setMainText(e.target.value);
+              setMainInvalid(false);
+            }}
+            onBlur={finishMainInput}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) e.currentTarget.blur();
             }}
           />
           <button
             className="tempo-picker-open"
             aria-label="Выбрать темп барабаном"
             onClick={() => {
-              setDraft(tempo);
+              setWheelDraft(latest.current.tempo);
               setOpen(true);
             }}
           >
@@ -109,13 +153,21 @@ export function TempoControl({ tempo, onTempo }: Props) {
           </button>
         </div>
       </div>
+      {mainInvalid && (
+        <div id="tempo-input-status" className="small" role="status">
+          {TEMPO_ERROR}
+        </div>
+      )}
       <input
         aria-label="Скорость"
         type="range"
         min={MIN}
         max={MAX}
         value={tempo}
-        onChange={(e) => onTempo(Number(e.target.value))}
+        onChange={(e) => {
+          setMainInvalid(false);
+          commitTempo(Number(e.target.value));
+        }}
       />
       <dialog
         ref={dialog}
@@ -136,11 +188,13 @@ export function TempoControl({ tempo, onTempo }: Props) {
             tabIndex={0}
             aria-label="Барабан темпа BPM"
             aria-activedescendant={`bpm-${draft}`}
-            onScroll={(e) =>
-              setDraft(
-                Math.max(MIN, Math.min(MAX, MIN + Math.round(e.currentTarget.scrollTop / ROW))),
-              )
-            }
+            onScroll={(e) => {
+              const next = Math.max(
+                MIN,
+                Math.min(MAX, MIN + Math.round(e.currentTarget.scrollTop / ROW)),
+              );
+              if (next !== draft) setWheelDraft(next);
+            }}
             onKeyDown={(e) => {
               if (['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
                 e.preventDefault();
@@ -172,27 +226,30 @@ export function TempoControl({ tempo, onTempo }: Props) {
             Точное значение
             <input
               aria-label="Новое значение BPM"
-              type="number"
-              min={MIN}
-              max={MAX}
-              value={draft}
+              aria-invalid={pickerInvalid || undefined}
+              aria-describedby={pickerInvalid ? 'tempo-picker-error' : undefined}
+              inputMode="numeric"
+              enterKeyHint="done"
+              value={pickerText ?? String(draft)}
               onChange={(e) => {
-                const n = Number(e.target.value);
-                if (Number.isInteger(n) && n >= MIN && n <= MAX) select(n);
+                setPickerText(e.target.value);
+                setPickerInvalid(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) confirm();
               }}
             />
           </label>
+          {pickerInvalid && (
+            <p id="tempo-picker-error" role="alert">
+              {TEMPO_ERROR}
+            </p>
+          )}
           <div className="fill-candidates">
             <button className="secondary-button" onClick={() => setOpen(false)}>
               Отмена
             </button>
-            <button
-              className="secondary-button"
-              onClick={() => {
-                onTempo(draft);
-                setOpen(false);
-              }}
-            >
+            <button className="secondary-button" onClick={confirm}>
               Готово
             </button>
           </div>

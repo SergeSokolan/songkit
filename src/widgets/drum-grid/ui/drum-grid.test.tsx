@@ -8,6 +8,15 @@ import {
   setHit,
 } from '../../../entities/drum-pattern';
 import { DrumGrid } from './drum-grid';
+
+// jsdom does not implement the native dialog methods.
+HTMLDialogElement.prototype.showModal = function () {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function () {
+  this.open = false;
+};
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();

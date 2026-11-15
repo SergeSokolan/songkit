@@ -26,6 +26,13 @@ import { InstrumentPicker } from '../../../widgets/instrument-picker';
 import { DrumGrid } from '../../../widgets/drum-grid';
 import { TransportPanel } from '../../../widgets/transport-panel';
 import { Icon } from '../../../shared/ui/icon';
+const hitPlural = new Intl.PluralRules('ru');
+const hitForms: Record<string, string> = {
+  one: 'удар',
+  few: 'удара',
+  many: 'ударов',
+  other: 'удара',
+};
 interface Props {
   initial: Draft | null;
   recoveryError: string;
@@ -65,7 +72,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
         ...view,
         bar: Math.floor(range.start / BAR_TICKS),
         grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
-        scrollLeft: ((range.start % BAR_TICKS) / 240) * 48,
+        scrollLeft: 0,
       },
     });
   };
@@ -429,7 +436,9 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
               <span className="save-dot" />
               {saveEnabled ? autosave.status : 'Автосохранение приостановлено'}
             </span>
-            <span className="small muted">{pattern.events.length} ударов · 4/4</span>
+            <span className="small muted">
+              {pattern.events.length} {hitForms[hitPlural.select(pattern.events.length)]} · 4/4
+            </span>
           </div>
         </div>
         <div className="below-editor">

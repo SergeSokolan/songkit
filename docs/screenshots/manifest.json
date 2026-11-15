@@ -1,7 +1,7 @@
 {
-  "version": "0.4.1",
-  "uiSourceHash": "50ae4fb20cc1442f046d09ce7c4619e1811823f53e206e8ab3501d1ddec7d011",
-  "capturedOn": "2026-11-14",
+  "version": "0.4.2-rc.1",
+  "uiSourceHash": "e4a03c331ae53fb296c8cee97d00f232e1c2066658c8c4903db27c49b1175709",
+  "capturedOn": "2026-11-15",
   "browser": "Playwright Chromium, CSS viewports; not a real iPhone",
   "files": [
     "after-360.png",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   BAR_TICKS,
   INSTRUMENT_DETAILS,
@@ -55,6 +55,9 @@ export function DrumGrid({
   } | null>(null);
   const dragging = useRef(false);
   const scroll = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const originCell = useRef<HTMLButtonElement>(null);
   const suppressClick = useRef(false);
   const instruments = displayInstruments(pattern);
   const step = gridTicks(grid);
@@ -75,11 +78,31 @@ export function DrumGrid({
     }
     return { hits, hidden };
   }, [pattern.events, barStart, step]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (scroll.current) scroll.current.scrollLeft = scrollLeft;
-  }, [scrollLeft]);
-  const activate = (instrument: Instrument, tick: number) => {
+  }, [bar, fillRange, grid, scrollLeft]);
+  useLayoutEffect(() => {
+    if (!fillRange || !scroll.current) return;
+    const viewport = scroll.current;
+    const firstCell = viewport.querySelector('.fill-selected');
+    if (firstCell)
+      viewport.scrollLeft +=
+        firstCell.getBoundingClientRect().left - viewport.getBoundingClientRect().left;
+  }, [bar, fillRange, grid]);
+  useLayoutEffect(() => {
+    if (selection) {
+      dialog.current?.showModal();
+      closeButton.current?.focus();
+    }
+  }, [selection]);
+  const closeSelection = () => {
+    dialog.current?.close();
+    setSelection(null);
+    originCell.current?.focus();
+  };
+  const activate = (cell: HTMLButtonElement, instrument: Instrument, tick: number) => {
     if (editing) {
+      originCell.current = cell;
       setSelection({ instrument, tick });
       setEditing(false);
       return;
@@ -88,6 +111,7 @@ export function DrumGrid({
       if (moving.instrument === instrument) {
         onMove(instrument, moving.tick, tick);
         setMoving(null);
+        cell.focus();
       }
       return;
     }
@@ -154,7 +178,14 @@ export function DrumGrid({
       {moving && (
         <div className="inline-notice">
           Выберите новое место на дорожке «{INSTRUMENT_DETAILS[moving.instrument].name}».{' '}
-          <button onClick={() => setMoving(null)}>Отмена</button>
+          <button
+            onClick={() => {
+              setMoving(null);
+              originCell.current?.focus();
+            }}
+          >
+            Отмена
+          </button>
         </div>
       )}
       <div className="sequencer" role="group" aria-label="Барабанная сетка">
@@ -228,12 +259,12 @@ export function DrumGrid({
                         onContextMenu={(e) => {
                           e.preventDefault();
                         }}
-                        onClick={() => {
+                        onClick={(e) => {
                           if (suppressClick.current) {
                             suppressClick.current = false;
                             return;
                           }
-                          activate(instrument, tick);
+                          activate(e.currentTarget, instrument, tick);
                         }}
                       >
                         {hit ? (
@@ -256,27 +287,41 @@ export function DrumGrid({
         </div>
       </div>
       {selection && (
-        <div className="sheet-backdrop" onClick={() => setSelection(null)}>
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-label="Сила удара"
-            className="strength-sheet"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setSelection(null);
-            }}
-          >
+        <dialog
+          ref={dialog}
+          aria-label="Сила удара"
+          className="sheet-backdrop"
+          onCancel={(e) => {
+            e.preventDefault();
+            closeSelection();
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeSelection();
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Tab') return;
+            const buttons = Array.from(
+              e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
+            );
+            const first = buttons[0];
+            const last = buttons.at(-1);
+            if (e.shiftKey ? e.target === first : e.target === last) {
+              e.preventDefault();
+              (e.shiftKey ? last : first)?.focus();
+            }
+          }}
+        >
+          <section className="strength-sheet">
             <div className="sheet-heading">
               <div>
                 <span className="eyebrow">СИЛА УДАРА</span>
                 <h3>{INSTRUMENT_DETAILS[selection.instrument].name}</h3>
               </div>
               <button
-                autoFocus
+                ref={closeButton}
                 className="icon-button"
                 aria-label="Закрыть"
-                onClick={() => setSelection(null)}
+                onClick={closeSelection}
               >
                 <Icon name="close" />
               </button>
@@ -290,7 +335,7 @@ export function DrumGrid({
                   className={`strength-choice ${strength} ${currentHit && strengthOf(currentHit.velocity) === strength ? 'chosen' : ''}`}
                   onClick={() => {
                     onHit(selection.instrument, selection.tick, VELOCITIES[strength]);
-                    setSelection(null);
+                    closeSelection();
                   }}
                 >
                   <span className="hit-dot">{strength === 'accent' ? '›' : ''}</span>
@@ -305,7 +350,7 @@ export function DrumGrid({
                   className="text-button"
                   onClick={() => {
                     setMoving(selection);
-                    setSelection(null);
+                    closeSelection();
                   }}
                 >
                   Перенести удар
@@ -314,7 +359,7 @@ export function DrumGrid({
                   className="text-button danger"
                   onClick={() => {
                     onHit(selection.instrument, selection.tick, null);
-                    setSelection(null);
+                    closeSelection();
                   }}
                 >
                   Удалить
@@ -326,7 +371,7 @@ export function DrumGrid({
               место.
             </p>
           </section>
-        </div>
+        </dialog>
       )}
     </>
   );

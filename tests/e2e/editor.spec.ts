@@ -346,6 +346,38 @@ test('requests music playback routing and can restore sound without changing the
   await expect(page.getByRole('button', { name: 'Играть', exact: true })).toBeEnabled();
 });
 
+test('manual tempo fields accept keyboard input and preserve the saved tempo until commit', async ({
+  page,
+}) => {
+  const main = page.getByLabel('Темп BPM', { exact: true });
+  const decrease = page.getByRole('button', { name: 'Уменьшить темп' });
+  await main.press('ControlOrMeta+A');
+  await main.press('Backspace');
+  await expect(main).toHaveValue('');
+  await main.pressSequentially('40');
+  await expect(main).toHaveValue('40');
+  await expect(decrease).toBeEnabled();
+  await main.press('Enter');
+  await expect(decrease).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Выбрать темп барабаном' }).click();
+  const dialog = page.getByRole('dialog');
+  const picker = dialog.getByLabel('Новое значение BPM');
+  await picker.press('ControlOrMeta+A');
+  await picker.press('Backspace');
+  await expect(picker).toHaveValue('');
+  await picker.pressSequentially('24');
+  await dialog.getByRole('button', { name: 'Готово', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('40–240');
+  await expect(main).toHaveValue('40');
+  await picker.press('End');
+  await picker.pressSequentially('0');
+  await dialog.getByRole('button', { name: 'Готово', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(main).toHaveValue('240');
+  await expect(page.getByRole('button', { name: 'Увеличить темп' })).toBeDisabled();
+});
+
 test('mobile tempo buttons and wheel confirm, cancel and restore offline', async ({
   page,
   context,
@@ -355,8 +387,10 @@ test('mobile tempo buttons and wheel confirm, cancel and restore offline', async
   await page.getByRole('button', { name: 'Уменьшить темп' }).click();
   await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('100');
   await page.getByRole('button', { name: 'Выбрать темп барабаном' }).click();
-  await page.getByLabel('Новое значение BPM').fill('140');
-  await expect(page.getByLabel('Новое значение BPM')).toHaveValue('140');
+  const pickerInput = page.getByLabel('Новое значение BPM');
+  await pickerInput.press('ControlOrMeta+A');
+  await pickerInput.pressSequentially('90');
+  await expect(pickerInput).toHaveValue('90');
   await page.getByRole('button', { name: 'Отмена', exact: true }).click();
   await expect(page.getByLabel('Темп BPM', { exact: true })).toHaveValue('100');
   await page.getByRole('button', { name: 'Выбрать темп барабаном' }).click();

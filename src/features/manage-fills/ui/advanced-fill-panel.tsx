@@ -200,20 +200,23 @@ export function AdvancedFillPanel({
             Оригинальные шаблоны SongKit, CC0. Длительность подстраивается к участку без изменения
             размера.
           </p>
-          {previewing && (
-            <div className="inline-notice" role="status">
-              Предпросмотр: нажмите «Играть». При воспроизведении вариант вступит со следующего
-              начала участка. Экспорт и сохранение используют подтверждённую партию.
-              <div className="fill-candidates">
-                <button className="secondary-button" onClick={onApply}>
-                  Применить брейк
-                </button>
-                <button className="secondary-button" onClick={onCancel}>
-                  Отменить предпросмотр
-                </button>
+          {previewing &&
+            activeId &&
+            (generated.some((fill) => fill.id === activeId) ||
+              FILL_LIBRARY.some((fill) => fill.id === activeId)) && (
+              <div className="inline-notice" role="status">
+                Предпросмотр: нажмите «Играть». При воспроизведении вариант вступит со следующего
+                начала участка. Экспорт и сохранение используют подтверждённую партию.
+                <div className="fill-candidates">
+                  <button className="secondary-button" onClick={onApply}>
+                    Применить брейк
+                  </button>
+                  <button className="secondary-button" onClick={onCancel}>
+                    Отменить предпросмотр
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       )}
     </section>
