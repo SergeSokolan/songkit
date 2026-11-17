@@ -38,8 +38,15 @@ interface Props {
   recoveryError: string;
   offlineReady: boolean;
   updateAvailable: boolean;
+  onUpdate: () => Promise<void>;
 }
-export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailable }: Props) {
+export function DrumEditor({
+  initial,
+  recoveryError,
+  offlineReady,
+  updateAvailable,
+  onUpdate,
+}: Props) {
   const { pattern, revision, change, canUndo, canRedo, undo, redo } = usePattern(
     initial?.pattern ?? demoPattern(),
   );
@@ -79,6 +86,10 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
   const [view, setView] = useState<EditorView>(initial?.view ?? defaultView);
   const [saveEnabled, setSaveEnabled] = useState(!recoveryError);
   const [notice, setNotice] = useState('');
+  const [updateDeferred, setUpdateDeferred] = useState(false);
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateError, setUpdateError] = useState('');
+  const updating = useRef(false);
   const [importError, setImportError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const importAlertRef = useRef<HTMLDivElement>(null);
@@ -107,6 +118,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
     draft.view.position,
     (tick) => {
       const position = tick % totalTicks(pattern);
+      if (position === draft.view.position) return;
       setView((v) => ({ ...v, position }));
       autosave.flush({ ...draft, view: { ...draft.view, position } });
     },
@@ -118,6 +130,41 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
         }
       : undefined,
   );
+  const updateApp = async () => {
+    if (updating.current) return;
+    if (!saveEnabled) {
+      setUpdateError('Автосохранение недоступно. Скачайте проект перед обновлением.');
+      return;
+    }
+    if (
+      !window.confirm(
+        'Обновить SongKit? История отмены, неподтверждённый брейк и ввод темпа будут сброшены.',
+      )
+    )
+      return;
+    updating.current = true;
+    setUpdateBusy(true);
+    setUpdateError('');
+    try {
+      const position = playback.stop() % totalTicks(pattern);
+      await autosave.flush({
+        ...draft,
+        view: { ...draft.view, position },
+      });
+    } catch {
+      setUpdateError('Не удалось сохранить черновик. Скачайте проект и попробуйте ещё раз.');
+      updating.current = false;
+      setUpdateBusy(false);
+      return;
+    }
+    try {
+      await onUpdate();
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : 'Не удалось обновить приложение.');
+      updating.current = false;
+      setUpdateBusy(false);
+    }
+  };
   const hit = (instrument: Instrument, tick: number, velocity: number | null) => {
     change((p) => setHit(p, instrument, tick, velocity));
     if (velocity !== null) void playback.preview({ id: '', instrument, tick, velocity });
@@ -156,6 +203,7 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
     setImportError('');
     try {
       const imported = await importProject(file);
+      if (updating.current) return;
       if (
         pattern.events.length &&
         !window.confirm('Заменить текущую партию проектом из файла? Действие можно отменить.')
@@ -194,7 +242,35 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
           {offlineReady ? 'Доступно офлайн' : 'Подготовка офлайн…'}
         </span>
       </header>
-      <main>
+      {updateAvailable && (
+        <section className="inline-notice" aria-label="Обновление SongKit">
+          <span role="status">
+            {updateBusy
+              ? 'Обновляем…'
+              : updateDeferred
+                ? 'Обновление отложено.'
+                : 'Доступна новая версия SongKit.'}
+          </span>
+          <button
+            className="secondary-button"
+            disabled={updateBusy}
+            onClick={() => void updateApp()}
+          >
+            Обновить
+          </button>
+          {!updateDeferred && (
+            <button
+              className="secondary-button"
+              disabled={updateBusy}
+              onClick={() => setUpdateDeferred(true)}
+            >
+              Позже
+            </button>
+          )}
+          {updateError && <p role="alert">{updateError}</p>}
+        </section>
+      )}
+      <main inert={updateBusy}>
         <div className="page-heading">
           <div>
             <div className="eyebrow section-kicker">
@@ -221,12 +297,6 @@ export function DrumEditor({ initial, recoveryError, offlineReady, updateAvailab
             </span>
           </div>
         </div>
-        {updateAvailable && (
-          <div className="inline-notice">
-            Доступно обновление. Скачайте проект и закройте все вкладки SongKit, чтобы применить
-            его.
-          </div>
-        )}
         {recoveryError && !saveEnabled && (
           <div role="alert" className="inline-notice warning">
             Не удалось восстановить черновик: {recoveryError}. Старые данные не перезаписаны. Можно
