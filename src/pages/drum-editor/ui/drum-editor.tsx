@@ -3,6 +3,8 @@ import { FillPanel, applyFill, type Fill, type FillRange } from '../../../featur
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BAR_TICKS,
+  PPQ,
+  INSTRUMENT_DETAILS,
   GRIDS,
   gridLabel,
   addInstrument,
@@ -33,6 +35,20 @@ const hitForms: Record<string, string> = {
   many: 'ударов',
   other: 'удара',
 };
+function describePreviewRange({ start, end }: FillRange) {
+  const firstBar = Math.floor(start / BAR_TICKS) + 1;
+  const lastBar = Math.ceil(end / BAR_TICKS);
+  if (start % BAR_TICKS === 0 && end % BAR_TICKS === 0) {
+    return firstBar === lastBar ? `Такт ${firstBar} целиком` : `Такты ${firstBar}–${lastBar}`;
+  }
+  const boundary = (tick: number) => {
+    const bar = Math.floor(tick / BAR_TICKS) + 1;
+    const beat = 1 + (tick % BAR_TICKS) / PPQ;
+    return `такт ${bar}, доля ${beat.toLocaleString('ru-RU')}`;
+  };
+  const endLabel = end % BAR_TICKS === 0 ? `конец такта ${lastBar}` : boundary(end);
+  return `Участок: ${boundary(start)} → ${endLabel}`;
+}
 interface Props {
   initial: Draft | null;
   recoveryError: string;
@@ -69,20 +85,6 @@ export function DrumEditor({
       window.removeEventListener('pagehide', hide);
     };
   }, []);
-  const previewFill = (fill: Fill, range: FillRange, allowMissing: boolean) => {
-    setFillPreview({
-      base: revision,
-      pattern: applyFill(pattern, range, fill, allowMissing),
-      range,
-      fillId: fill.id,
-      view: {
-        ...view,
-        bar: Math.floor(range.start / BAR_TICKS),
-        grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
-        scrollLeft: 0,
-      },
-    });
-  };
   const [view, setView] = useState<EditorView>(initial?.view ?? defaultView);
   const [saveEnabled, setSaveEnabled] = useState(!recoveryError);
   const [notice, setNotice] = useState('');
@@ -129,6 +131,57 @@ export function DrumEditor({
           end: activePreview.range.end,
         }
       : undefined,
+  );
+  const cancelPreview = () => {
+    if (activePreview) playback.stop();
+    setFillPreview(null);
+  };
+  const previewFill = (fill: Fill, range: FillRange, allowMissing: boolean) => {
+    if (activePreview?.fillId === fill.id) {
+      cancelPreview();
+      return;
+    }
+    const nextPattern = applyFill(pattern, range, fill, allowMissing);
+    setFillPreview({
+      base: revision,
+      pattern: nextPattern,
+      range,
+      fillId: fill.id,
+      view: {
+        ...view,
+        bar: Math.floor(range.start / BAR_TICKS),
+        grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
+        scrollLeft: 0,
+      },
+    });
+    void playback.play({ pattern: nextPattern, start: range.start, end: range.end });
+  };
+  const previewDetails = activePreview && (
+    <>
+      <p role="status">
+        {describePreviewRange(activePreview.range)}
+        {' · Дорожки замены: '}
+        {activePreview.range.tracks.map((track) => INSTRUMENT_DETAILS[track].name).join(', ')}.
+        {activePreview.pattern.instruments.some(
+          (track) => !pattern.instruments.includes(track),
+        ) && (
+          <>
+            {' '}
+            Добавятся:{' '}
+            {activePreview.pattern.instruments
+              .filter((track) => !pattern.instruments.includes(track))
+              .map((track) => INSTRUMENT_DETAILS[track].name)
+              .join(', ')}
+            .
+          </>
+        )}
+      </p>
+      {playback.error && (
+        <p role="alert" className="inline-notice warning">
+          {playback.error}
+        </p>
+      )}
+    </>
   );
   const updateApp = async () => {
     if (updating.current) return;
@@ -271,31 +324,19 @@ export function DrumEditor({
         </section>
       )}
       <main inert={updateBusy}>
-        <div className="page-heading">
-          <div>
-            <div className="eyebrow section-kicker">
-              <span>01</span> БАРАБАННАЯ МАСТЕРСКАЯ
-            </div>
-            <h1>
-              Всё начинается
-              <br className="mobile-break" /> с ритма<span>.</span>
-            </h1>
-            <p className="intro">Наберите бит. Найдите свой грув.</p>
-          </div>
-          <div className="heading-note">
-            <span className="tiny-bars">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-            <span>
-              Меньше настроек.
-              <br />
-              Больше музыки.
-            </span>
-          </div>
+        <div className="page-heading editor-heading">
+          <h1>Барабанный редактор</h1>
+          <nav className="editor-shortcuts" aria-label="Действия редактора">
+            <button className="secondary-button" onClick={newPattern}>
+              Новая партия
+            </button>
+            <a className="secondary-button" href="#pattern-library">
+              Ритмы и брейки
+            </a>
+            <a className="secondary-button" href="#project-actions">
+              Файлы
+            </a>
+          </nav>
         </div>
         {recoveryError && !saveEnabled && (
           <div role="alert" className="inline-notice warning">
@@ -316,7 +357,6 @@ export function DrumEditor({
             <div className="session-title">
               <span className="live-dot" />
               <strong>Мой грув</strong>
-              <span className="prototype-badge">ПРОТОТИП</span>
             </div>
             <div className="history-actions">
               <button
@@ -345,12 +385,7 @@ export function DrumEditor({
             onPlay={() => void playback.play()}
             onPause={playback.stop}
           />
-          <AudioHelp
-            loading={playback.loading}
-            tested={playback.soundTested}
-            onCheck={() => void playback.checkSound()}
-          />
-          {playback.error && (
+          {playback.error && !activePreview && (
             <div role="alert" className="inline-notice warning">
               {playback.error}
             </div>
@@ -364,7 +399,7 @@ export function DrumEditor({
                   aria-label={`Такт ${i + 1}`}
                   aria-pressed={visibleBar === i}
                   onClick={() => {
-                    setFillPreview(null);
+                    cancelPreview();
                     setView((v) => ({ ...v, bar: i, scrollLeft: 0 }));
                   }}
                 >
@@ -397,7 +432,7 @@ export function DrumEditor({
               </select>
             </label>
           </div>
-          <div className="grid-toolbar">
+          <div id="pattern-grid" className="grid-toolbar" tabIndex={-1}>
             <span className="eyebrow">РИСУНОК</span>
             <div className="grid-controls">
               <span>Сетка</span>
@@ -415,41 +450,6 @@ export function DrumEditor({
               </div>
             </div>
           </div>
-          <InstrumentPicker
-            instruments={pattern.instruments}
-            onAdd={(instrument) => change((p) => addInstrument(p, instrument))}
-          />
-          <FillPanel
-            bar={bar}
-            key={`fills-${pattern.barCount}`}
-            pattern={pattern}
-            previewing={!!activePreview}
-            activeId={activePreview?.fillId}
-            onPreview={previewFill}
-            onCancel={() => setFillPreview(null)}
-            onApply={() => {
-              if (activePreview) {
-                change(() => activePreview.pattern);
-                setView(activePreview.view);
-                setFillPreview(null);
-              }
-            }}
-          />
-          <GroovePanel
-            bar={bar}
-            key={pattern.barCount}
-            pattern={pattern}
-            activeId={activePreview?.fillId}
-            onPreview={previewFill}
-            onCancel={() => setFillPreview(null)}
-            onApply={() => {
-              if (activePreview) {
-                change(() => activePreview.pattern);
-                setView(activePreview.view);
-                setFillPreview(null);
-              }
-            }}
-          />
           <div className="grid-transport" aria-label="Транспорт у сетки">
             <button
               className="secondary-button"
@@ -464,6 +464,7 @@ export function DrumEditor({
               {playback.error ? 'Ошибка звука' : activePreview ? 'Предпросмотр' : 'Партия'} · 4/4
             </span>
           </div>
+          <p className="grid-entry-hint">Касания: пусто → обычный → тихий → пусто</p>
           <fieldset
             disabled={!!activePreview}
             className="preview-grid"
@@ -499,8 +500,16 @@ export function DrumEditor({
                 Акцент
               </span>
             </div>
-            <span className="grid-hint">Касания: пусто → обычный → тихий → пусто</span>
           </div>
+          <InstrumentPicker
+            instruments={pattern.instruments}
+            onAdd={(instrument) => change((p) => addInstrument(p, instrument))}
+          />
+          <AudioHelp
+            loading={playback.loading}
+            tested={playback.soundTested}
+            onCheck={() => void playback.checkSound()}
+          />
           <div className="card-bottom">
             <span className="save-status" role="status">
               <span className="save-dot" />
@@ -511,7 +520,53 @@ export function DrumEditor({
             </span>
           </div>
         </div>
-        <div className="below-editor">
+        <section
+          id="pattern-library"
+          className="pattern-library"
+          tabIndex={-1}
+          aria-labelledby="pattern-library-heading"
+        >
+          <div className="library-heading">
+            <h2 id="pattern-library-heading">Ритмы и брейки</h2>
+            <a className="secondary-button" href="#pattern-grid">
+              К сетке
+            </a>
+          </div>
+          <FillPanel
+            bar={bar}
+            key={`fills-${pattern.barCount}`}
+            pattern={pattern}
+            previewing={!!activePreview}
+            activeId={activePreview?.fillId}
+            onPreview={previewFill}
+            previewDetails={previewDetails}
+            onCancel={cancelPreview}
+            onApply={() => {
+              if (activePreview) {
+                change(() => activePreview.pattern);
+                setView(activePreview.view);
+                setFillPreview(null);
+              }
+            }}
+          />
+          <GroovePanel
+            bar={bar}
+            key={pattern.barCount}
+            pattern={pattern}
+            activeId={activePreview?.fillId}
+            onPreview={previewFill}
+            previewDetails={previewDetails}
+            onCancel={cancelPreview}
+            onApply={() => {
+              if (activePreview) {
+                change(() => activePreview.pattern);
+                setView(activePreview.view);
+                setFillPreview(null);
+              }
+            }}
+          />
+        </section>
+        <div id="project-actions" className="below-editor" tabIndex={-1}>
           <p className="privacy-note">
             <span className="privacy-icon">⌁</span>Ваш бит остаётся на вашем устройстве.
             <br />
@@ -575,9 +630,6 @@ export function DrumEditor({
           </div>
         </section>
         <div className="workspace-actions">
-          <button className="text-button" onClick={newPattern}>
-            Новая партия
-          </button>
           <button
             className="text-button"
             onClick={() => {

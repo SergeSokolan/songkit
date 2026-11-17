@@ -27,7 +27,7 @@ for (const { name, grid, count } of [
     await page.getByLabel('Жанр брейка').selectOption('metal');
     await page.getByLabel('Длительность брейка').selectOption('1');
     await page.getByLabel('Добавить недостающие дорожки при применении').check();
-    await page.getByRole('button', { name: `Прослушать: ${name}`, exact: true }).click();
+    await page.getByRole('button', { name: `Послушать: ${name}`, exact: true }).click();
 
     await expect(page.getByRole('button', { name: grid, exact: true })).toHaveAttribute(
       'aria-pressed',
@@ -47,7 +47,7 @@ for (const { name, grid, count } of [
       )
       .toBe(count);
 
-    await page.getByRole('button', { name: 'Отменить предпросмотр' }).click();
+    await page.getByRole('button', { name: `Остановить: ${name}` }).click();
     await expect(editorGrid).toHaveAttribute('aria-pressed', 'true');
     await expect(scroll.locator('.fill-selected')).toHaveCount(0);
     await expect.poll(() => scroll.evaluate((element) => element.scrollLeft)).toBe(originalScroll);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { INSTRUMENT_DETAILS, type Pattern } from '../../../entities/drum-pattern';
 import { GROOVE_CATALOG, grooveCandidate } from '../model/grooves';
 interface Props {
@@ -12,9 +12,18 @@ interface Props {
   onApply: () => void;
   onCancel: () => void;
   activeId?: string;
+  previewDetails?: ReactNode;
 }
 const genres = { rock: 'Рок', metal: 'Металл', pop: 'Поп', funk: 'Фанк', jazz: 'Джаз' };
-export function GroovePanel({ pattern, bar, onPreview, onApply, onCancel, activeId }: Props) {
+export function GroovePanel({
+  pattern,
+  bar,
+  onPreview,
+  onApply,
+  onCancel,
+  activeId,
+  previewDetails,
+}: Props) {
   const [open, setOpen] = useState(false),
     [genre, setGenre] = useState('rock'),
     [all, setAll] = useState(false),
@@ -103,23 +112,20 @@ export function GroovePanel({ pattern, bar, onPreview, onApply, onCancel, active
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allow)}
                   >
-                    Прослушать: {card.name}
+                    {activeId === card.id ? 'Остановить' : 'Послушать'}: {card.name}
                   </button>
+                  {activeId === card.id && (
+                    <div className="preview-actions">
+                      {previewDetails}
+                      <button className="secondary-button" onClick={onApply}>
+                        Применить ритм
+                      </button>
+                    </div>
+                  )}
                 </article>
               );
             })}
           </div>
-          {activeId && GROOVE_CATALOG.some((c) => c.id === activeId) && (
-            <div className="inline-notice" role="status">
-              Предпросмотр: нажмите «Играть». Исходная партия сохранена до применения.
-              <button className="secondary-button" onClick={onApply}>
-                Применить ритм
-              </button>
-              <button className="secondary-button" onClick={onCancel}>
-                Отменить предпросмотр
-              </button>
-            </div>
-          )}
           <p className="small">
             Оригинальные учебные адаптации. Обратный свинг — согласованный вариант короткая/длинная,
             не общепринятый стандарт джаза. Райд и остальные инструменты имеют отдельные позиции;
