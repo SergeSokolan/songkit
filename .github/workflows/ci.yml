@@ -33,7 +33,17 @@ jobs:
             fi
           done
           npx playwright install --with-deps chromium webkit
-      - run: npm run test:e2e
+      - name: Serve the production build and simulate user actions
+        run: npm run test:e2e
+      - name: Describe the test environment
+        if: always()
+        run: |
+          {
+            echo "### SongKit browser verification"
+            echo "Commit: $GITHUB_SHA"
+            echo "Playwright serves the built dist on a private loopback port under /songkit/."
+            echo "Chromium and mobile WebKit results, screenshots and traces are in verification-reports."
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
