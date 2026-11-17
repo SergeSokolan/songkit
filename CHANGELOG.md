@@ -6,6 +6,16 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
+## [0.5.1] — 2026-11-18
+
+### Изменено
+
+- Сетка и транспорт доступны раньше на мобильном экране. Создание партии, библиотека и файлы доступны у заголовка.
+- «Послушать» и «Остановить» запускают и останавливают образец в карточке. Выбор другого образца переключает звук. До применения видны участок и затронутые дорожки.
+- Селекты и чекбоксы оформлены в общей теме с нативным управлением.
+
+Текущий формат проекта и черновика сохранён.
+
 ## [0.5.1-rc.3] — 2026-11-17
 
 ### Изменено
@@ -149,7 +159,7 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.5.1...HEAD
 [0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
@@ -157,3 +167,4 @@
 [0.4.2-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...v0.4.2-rc.1
 [0.4.2]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...v0.4.2
 [0.5.0]: https://github.com/SergeSokolan/songkit/compare/v0.4.2...v0.5.0
+[0.5.1]: https://github.com/SergeSokolan/songkit/compare/v0.5.0...v0.5.1
