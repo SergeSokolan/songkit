@@ -69,6 +69,26 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
     const tempo = page.getByLabel('Темп BPM', { exact: true });
     await tempo.fill('239');
     await tempo.press('Enter');
+    const restoreStorage = await page.evaluateHandle(() => {
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (...args: Parameters<typeof put>) {
+        const request = put.apply(this, args);
+        if (this.name === 'drafts') this.transaction.abort();
+        return request;
+      };
+      return () => {
+        IDBObjectStore.prototype.put = put;
+      };
+    });
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Обновить', exact: true }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Скачайте проект' })).toBeVisible();
+    await expect(page.locator('.app-version')).toHaveText('v0.0.1');
+    await expect(tempo).toHaveValue('239');
+    await expect(page.getByRole('button', { name: 'Проект', exact: true })).toBeEnabled();
+    await restoreStorage.evaluate((restore) => restore());
+    await restoreStorage.dispose();
+
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Обновить', exact: true }).click();
     await expect(page.locator('.app-version')).toHaveText('v0.0.2');
