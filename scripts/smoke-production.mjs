@@ -18,7 +18,8 @@ try {
   expect(response?.ok(), 'Production returns HTTP success').toBe(true);
   const footer = page.locator('.app-version');
   await expect(footer).toHaveText(`v${version}`, { timeout: 30_000 });
-  await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
+  // A fresh profile downloads the precache from Pages before it can work offline.
+  await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible({ timeout: 90_000 });
 
   const note = page.getByRole('button', { name: /Бочка, такт 1, шаг 2, пусто/ });
   await note.tap();
