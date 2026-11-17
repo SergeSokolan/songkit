@@ -17,11 +17,28 @@ jobs:
       BASE_PATH: /songkit/
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
           cache: npm
-      - run: npm ci
+      - name: Check PR changes before installing dependencies
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$PR_BASE_SHA"
+          # Bootstrap the scanner on its first PR; subsequent runs use the base copy.
+          if git cat-file -e "$PR_BASE_SHA:scripts/check-change-security.mjs"; then
+            git show "$PR_BASE_SHA:scripts/check-change-security.mjs" > "$RUNNER_TEMP/check-change-security.mjs"
+            node "$RUNNER_TEMP/check-change-security.mjs" "$PR_BASE_SHA"
+          else
+            node scripts/check-change-security.mjs "$PR_BASE_SHA"
+          fi
+      - name: Audit locked dependencies
+        run: node scripts/audit-dependencies.mjs
+      - run: npm ci --ignore-scripts --no-audit
       - run: npm run check
       - name: Install browser dependencies and browsers
         timeout-minutes: 6

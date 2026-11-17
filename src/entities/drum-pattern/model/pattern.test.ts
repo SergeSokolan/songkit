@@ -153,6 +153,17 @@ describe('untrusted project and draft input', () => {
       'Повторяющиеся',
     );
   });
+  it('normalizes a JSON project without copying prototype keys or nested metadata', () => {
+    const project = setHit(createPattern(), 'kick', 0, 80);
+    const json = JSON.stringify(project).replace(
+      '{',
+      `{"__proto__":{"unexpected":true},"constructor":{"prototype":{"unexpected":true}},"metadata":${'['.repeat(2048)}0${']'.repeat(2048)},`,
+    );
+    const parsed = parsePattern(JSON.parse(json));
+    expect(parsed).toEqual(project);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+    expect(Object.hasOwn(Object.prototype, 'unexpected')).toBe(false);
+  });
   it.each([
     null,
     2,
