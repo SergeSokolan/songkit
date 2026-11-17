@@ -17,10 +17,19 @@ jobs:
       BASE_PATH: /songkit/
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
           cache: npm
+      - name: Check PR changes before installing dependencies
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$PR_BASE_SHA"
+          node scripts/check-change-security.mjs "$PR_BASE_SHA"
       - run: npm ci
       - run: npm run check
       - name: Install browser dependencies and browsers

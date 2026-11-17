@@ -2,11 +2,39 @@ import { defineConfig } from 'vite';
 import packageJson from './package.json' with { type: 'json' };
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+const contentSecurityPolicy = [
+  "default-src 'none'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "media-src 'self'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-src 'none'",
+].join('; ');
+
 export default defineConfig({
   define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version) },
   base: process.env.BASE_PATH || '/',
   build: { manifest: true },
   plugins: [
+    {
+      name: 'songkit-content-security-policy',
+      apply: 'build',
+      transformIndexHtml: {
+        order: 'pre',
+        handler: () => [
+          {
+            tag: 'meta',
+            attrs: { 'http-equiv': 'Content-Security-Policy', content: contentSecurityPolicy },
+            injectTo: 'head-prepend',
+          },
+        ],
+      },
+    },
     react(),
     VitePWA({
       registerType: 'prompt',

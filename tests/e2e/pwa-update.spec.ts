@@ -10,6 +10,8 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
   const directory = await mkdtemp(join(tmpdir(), 'songkit-update-'));
   const versions = ['0.0.1', '0.0.2'];
   let current = versions[0];
+  let rejectNewBundle = false;
+  let failedBundleRequests = 0;
   const types: Record<string, string> = {
     html: 'text/html',
     js: 'text/javascript',
@@ -24,6 +26,11 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
       return;
     }
     const file = path.slice('/songkit/'.length) || 'index.html';
+    if (rejectNewBundle && /^assets\/index-.*\.js$/.test(file)) {
+      failedBundleRequests++;
+      res.writeHead(503).end();
+      return;
+    }
     try {
       const content = await readFile(join(directory, current, file));
       res
@@ -58,6 +65,40 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
     await expect(other.locator('.app-version')).toHaveText('v0.0.1');
 
     current = versions[1];
+    rejectNewBundle = true;
+    const failedState = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) throw new Error('Missing service worker registration');
+      return new Promise<string>((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error('Failed install did not finish')),
+          10_000,
+        );
+        registration.addEventListener(
+          'updatefound',
+          () => {
+            const installing = registration.installing;
+            if (!installing) return;
+            const finished = () => {
+              if (installing.state !== 'redundant' && installing.state !== 'installed') return;
+              clearTimeout(timeout);
+              installing.removeEventListener('statechange', finished);
+              resolve(installing.state);
+            };
+            installing.addEventListener('statechange', finished);
+            finished();
+          },
+          { once: true },
+        );
+        void registration.update().catch(reject);
+      });
+    });
+    expect(failedState).toBe('redundant');
+    expect(failedBundleRequests).toBeGreaterThan(0);
+    await expect(page.locator('.app-version')).toHaveText('v0.0.1');
+    await expect(page.getByRole('button', { name: 'Обновить', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Такт 1', exact: true })).toBeEnabled();
+    rejectNewBundle = false;
     for (const client of [page, other]) {
       await client.evaluate(async () =>
         (await navigator.serviceWorker.getRegistration())?.update(),

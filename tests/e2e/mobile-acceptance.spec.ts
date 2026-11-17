@@ -62,13 +62,19 @@ test('mobile editor acceptance: tap, cancel a gesture, and restore the draft off
 });
 
 test('large track labels stay above their cells in the compact grid', async ({ page }) => {
+  // Use the production stylesheet so the test runs with the production CSP.
+  await page.route('**/assets/*.css', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      body: `${await response.text()}\n.mobile-track-name { font-size: 24px !important; line-height: 1.3 !important; }`,
+    });
+  });
   await page.goto('./');
   for (const instrument of ['tom3', 'tom1', 'tom2', 'ride', 'crash1', 'crash2'])
     await page.getByLabel('Добавить инструмент', { exact: true }).selectOption(instrument);
 
-  await page.addStyleTag({
-    content: '.mobile-track-name { font-size: 24px !important; line-height: 1.3 !important; }',
-  });
+  await expect(page.locator('.mobile-track-name').first()).toHaveCSS('font-size', '24px');
 
   for (const width of [390, 760]) {
     await page.setViewportSize({ width, height: width === 390 ? 664 : 390 });

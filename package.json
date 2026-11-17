@@ -1,6 +1,6 @@
 {
   "name": "songkit",
-  "version": "0.5.1",
+  "version": "0.5.2-rc.1",
   "private": true,
   "type": "module",
   "engines": {
