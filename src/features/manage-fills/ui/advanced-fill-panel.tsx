@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   PPQ,
   INSTRUMENTS,
@@ -15,6 +15,7 @@ interface Props {
   onCancel: () => void;
   previewing: boolean;
   activeId?: string;
+  previewDetails?: ReactNode;
 }
 function boundaryLabel(beat: number) {
   const whole = Math.floor(beat);
@@ -28,6 +29,7 @@ export function AdvancedFillPanel({
   onCancel,
   previewing,
   activeId,
+  previewDetails,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(Math.max(0, totalTicks(pattern) / PPQ - 2));
@@ -204,17 +206,14 @@ export function AdvancedFillPanel({
             activeId &&
             (generated.some((fill) => fill.id === activeId) ||
               FILL_LIBRARY.some((fill) => fill.id === activeId)) && (
-              <div className="inline-notice" role="status">
-                Предпросмотр: нажмите «Играть». При воспроизведении вариант вступит со следующего
-                начала участка. Экспорт и сохранение используют подтверждённую партию.
-                <div className="fill-candidates">
-                  <button className="secondary-button" onClick={onApply}>
-                    Применить брейк
-                  </button>
-                  <button className="secondary-button" onClick={onCancel}>
-                    Отменить предпросмотр
-                  </button>
-                </div>
+              <div className="preview-actions">
+                {previewDetails}
+                <button className="secondary-button" onClick={onApply}>
+                  Применить брейк
+                </button>
+                <button className="secondary-button" onClick={onCancel}>
+                  Отменить предпросмотр
+                </button>
               </div>
             )}
         </div>

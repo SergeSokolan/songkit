@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { INSTRUMENT_DETAILS, type Pattern } from '../../../entities/drum-pattern';
 import { catalogFill, FILL_CATALOG, GENRES } from '../model/catalog';
 import type { Fill, FillRange } from '../model/fills';
@@ -11,9 +11,11 @@ interface Props {
   onCancel: () => void;
   previewing: boolean;
   activeId?: string;
+  previewDetails?: ReactNode;
 }
 export function FillPanel(props: Props) {
-  const { pattern, bar, onPreview, onApply, onCancel, previewing, activeId } = props;
+  const { pattern, bar, onPreview, onApply, onCancel, previewing, activeId, previewDetails } =
+    props;
   const [open, setOpen] = useState(false);
   const [genre, setGenre] = useState('rock');
   const [beats, setBeats] = useState(2);
@@ -106,28 +108,27 @@ export function FillPanel(props: Props) {
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allowMissing)}
                   >
-                    Прослушать: {card.name}
+                    Предпросмотр: {card.name}
                   </button>
+                  {previewing && activeId === card.id && (
+                    <div className="preview-actions">
+                      {previewDetails}
+                      <button className="secondary-button" onClick={onApply}>
+                        Применить брейк
+                      </button>
+                      <button className="secondary-button" onClick={onCancel}>
+                        Отменить предпросмотр
+                      </button>
+                    </div>
+                  )}
                 </article>
               );
             })}
           </div>
           <p className="small">
             Учебные адаптации SongKit, CC0. S — малый, H — хэт, K — бочка, R/L — руки; скобки —
-            тихий удар. Прослушивание: выберите карточку, затем «Играть».
+            тихий удар.
           </p>
-          {previewing && activeId && FILL_CATALOG.some((c) => c.id === activeId) && (
-            <div className="inline-notice" role="status">
-              Предпросмотр не сохраняется. Заменяются перечисленные дорожки в конце такта {bar + 1};
-              остальная партия сохраняется.
-              <button className="secondary-button" onClick={onApply}>
-                Применить брейк
-              </button>
-              <button className="secondary-button" onClick={onCancel}>
-                Отменить предпросмотр
-              </button>
-            </div>
-          )}
           <AdvancedFillPanel {...props} />
         </div>
       )}

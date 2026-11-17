@@ -3,6 +3,8 @@ import { FillPanel, applyFill, type Fill, type FillRange } from '../../../featur
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BAR_TICKS,
+  PPQ,
+  INSTRUMENT_DETAILS,
   GRIDS,
   gridLabel,
   addInstrument,
@@ -33,6 +35,20 @@ const hitForms: Record<string, string> = {
   many: 'ударов',
   other: 'удара',
 };
+function describePreviewRange({ start, end }: FillRange) {
+  const firstBar = Math.floor(start / BAR_TICKS) + 1;
+  const lastBar = Math.ceil(end / BAR_TICKS);
+  if (start % BAR_TICKS === 0 && end % BAR_TICKS === 0) {
+    return firstBar === lastBar ? `Такт ${firstBar} целиком` : `Такты ${firstBar}–${lastBar}`;
+  }
+  const boundary = (tick: number) => {
+    const bar = Math.floor(tick / BAR_TICKS) + 1;
+    const beat = 1 + (tick % BAR_TICKS) / PPQ;
+    return `такт ${bar}, доля ${beat.toLocaleString('ru-RU')}`;
+  };
+  const endLabel = end % BAR_TICKS === 0 ? `конец такта ${lastBar}` : boundary(end);
+  return `Участок: ${boundary(start)} → ${endLabel}`;
+}
 interface Props {
   initial: Draft | null;
   recoveryError: string;
@@ -129,6 +145,42 @@ export function DrumEditor({
           end: activePreview.range.end,
         }
       : undefined,
+  );
+  const previewDetails = activePreview && (
+    <>
+      <p role="status">
+        {describePreviewRange(activePreview.range)}
+        {' · Дорожки замены: '}
+        {activePreview.range.tracks.map((track) => INSTRUMENT_DETAILS[track].name).join(', ')}.
+        {activePreview.pattern.instruments.some(
+          (track) => !pattern.instruments.includes(track),
+        ) && (
+          <>
+            {' '}
+            Добавятся:{' '}
+            {activePreview.pattern.instruments
+              .filter((track) => !pattern.instruments.includes(track))
+              .map((track) => INSTRUMENT_DETAILS[track].name)
+              .join(', ')}
+            .
+          </>
+        )}
+      </p>
+      <button
+        className="secondary-button"
+        disabled={playback.loading}
+        onClick={
+          playback.playing ? playback.stop : () => void playback.play(activePreview.range.start)
+        }
+      >
+        {playback.playing ? 'Пауза предпросмотра' : 'Играть предпросмотр'}
+      </button>
+      {playback.error && (
+        <p role="alert" className="inline-notice warning">
+          {playback.error}
+        </p>
+      )}
+    </>
   );
   const updateApp = async () => {
     if (updating.current) return;
@@ -332,7 +384,7 @@ export function DrumEditor({
             onPlay={() => void playback.play()}
             onPause={playback.stop}
           />
-          {playback.error && (
+          {playback.error && !activePreview && (
             <div role="alert" className="inline-notice warning">
               {playback.error}
             </div>
@@ -486,6 +538,7 @@ export function DrumEditor({
             previewing={!!activePreview}
             activeId={activePreview?.fillId}
             onPreview={previewFill}
+            previewDetails={previewDetails}
             onCancel={() => setFillPreview(null)}
             onApply={() => {
               if (activePreview) {
@@ -501,6 +554,7 @@ export function DrumEditor({
             pattern={pattern}
             activeId={activePreview?.fillId}
             onPreview={previewFill}
+            previewDetails={previewDetails}
             onCancel={() => setFillPreview(null)}
             onApply={() => {
               if (activePreview) {

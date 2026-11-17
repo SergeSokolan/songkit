@@ -75,7 +75,7 @@ export function usePlayback(
       disposeAudio();
     };
   }, [stop]);
-  const play = async () => {
+  const play = async (startAt?: number) => {
     if (playing || loading) return;
     const request = ++requestRef.current;
     setLoading(true);
@@ -88,7 +88,7 @@ export function usePlayback(
       schedulerRef.current ??= new Scheduler(audioRef.current, (tick) => {
         return activeAudition.current.resolve(patternRef.current, auditionRef.current, tick);
       });
-      schedulerRef.current.start(positionRef.current);
+      schedulerRef.current.start(startAt ?? positionRef.current);
       setPlaying(true);
     } catch (e) {
       if (request === requestRef.current)

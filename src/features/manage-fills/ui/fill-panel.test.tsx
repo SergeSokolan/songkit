@@ -17,7 +17,7 @@ it('shows preview actions only in the panel owning the active candidate', () => 
   fireEvent.click(screen.getByText('Дополнительно: генератор и произвольный участок'));
   const advanced = within(screen.getByRole('region', { name: 'Брейки' }));
   const actions = ['Применить брейк', 'Отменить предпросмотр'];
-  fireEvent.click(screen.getByRole('button', { name: 'Прослушать: Малый восьмыми' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Предпросмотр: Малый восьмыми' }));
   const catalogId = props.onPreview.mock.calls.at(-1)![0].id;
   rerender(<FillPanel {...props} activeId={catalogId} />);
   for (const name of actions) {

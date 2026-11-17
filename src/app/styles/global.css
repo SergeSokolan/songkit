@@ -1763,3 +1763,15 @@ input[type='range'] {
   background: #20231f;
   border-radius: 15px 15px 0 0;
 }
+
+.preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.preview-actions p {
+  flex-basis: 100%;
+  margin: 0;
+}

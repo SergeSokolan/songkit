@@ -27,7 +27,7 @@ for (const { name, grid, count } of [
     await page.getByLabel('Жанр брейка').selectOption('metal');
     await page.getByLabel('Длительность брейка').selectOption('1');
     await page.getByLabel('Добавить недостающие дорожки при применении').check();
-    await page.getByRole('button', { name: `Прослушать: ${name}`, exact: true }).click();
+    await page.getByRole('button', { name: `Предпросмотр: ${name}`, exact: true }).click();
 
     await expect(page.getByRole('button', { name: grid, exact: true })).toHaveAttribute(
       'aria-pressed',
