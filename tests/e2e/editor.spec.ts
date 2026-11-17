@@ -25,7 +25,7 @@ test.beforeEach(async ({ page }) => {
       });
   });
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: /Всё начинается/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'В начало', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Играть', exact: true })).toHaveText('');
   await expect(page.getByRole('button', { name: 'Играть у сетки', exact: true })).toHaveText('');
@@ -105,7 +105,7 @@ test('offline reload and playback remain local', async ({ page, context }) => {
   await page.reload();
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Всё начинается/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
   const supported = await startOrCheckUnsupported(page);
   if (supported) await page.getByRole('button', { name: 'Пауза', exact: true }).click();
   await page.getByRole('button', { name: 'Бочка, такт 1, шаг 2, пусто', exact: true }).click();
@@ -232,7 +232,7 @@ test('adds the full kit in height order, undoes additions, restores and plays of
   await expect(page.locator('.track-label strong')).toHaveText(expected);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Всё начинается/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
   await expect(page.locator('.track-label strong')).toHaveText(expected);
   const samples = await page.evaluate(async () =>
     Promise.all(
