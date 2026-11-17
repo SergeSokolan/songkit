@@ -5,6 +5,7 @@ export function useAutosave(draft: Draft, enabled: boolean) {
   const [status, setStatus] = useState('Сохранение…');
   const queue = useRef(Promise.resolve());
   const latest = useRef(draft);
+  const saved = useRef<Draft | null>(null);
   const mounted = useRef(true);
   const revision = useRef(0);
   useEffect(() => {
@@ -24,6 +25,7 @@ export function useAutosave(draft: Draft, enabled: boolean) {
       queue.current = queue.current.catch(() => {}).then(() => saveDraft(current));
       queue.current.then(
         () => {
+          saved.current = current;
           if (mounted.current && savedRevision === revision.current)
             setStatus('Черновик на устройстве');
         },
@@ -32,6 +34,7 @@ export function useAutosave(draft: Draft, enabled: boolean) {
             setStatus('Не удалось сохранить. Скачайте проект.');
         },
       );
+      return queue.current;
     },
     [enabled],
   );
@@ -40,10 +43,12 @@ export function useAutosave(draft: Draft, enabled: boolean) {
     revision.current++;
     setStatus('Сохранение…');
     const timer = setTimeout(() => flush(), 150);
-    const hide = () => {
-      if (document.hidden) flush();
+    const pagehide = () => {
+      if (latest.current !== saved.current) void flush();
     };
-    const pagehide = () => flush();
+    const hide = () => {
+      if (document.hidden) pagehide();
+    };
     document.addEventListener('visibilitychange', hide);
     window.addEventListener('pagehide', pagehide);
     return () => {

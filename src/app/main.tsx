@@ -4,6 +4,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { DrumEditor } from '../pages/drum-editor';
 import { loadDraft } from '../features/draft-recovery';
 import type { Draft } from '../entities/drum-pattern';
+import { activateUpdate } from './activate-update';
 import './styles/global.css';
 function App() {
   const [boot, setBoot] = useState<{ draft: Draft | null; error: string } | null>(null);
@@ -12,6 +13,15 @@ function App() {
   const {
     needRefresh: [updateAvailable],
   } = useRegisterSW({
+    onNeedReload() {},
+    onRegisteredSW(_url, registration) {
+      if (!registration) return;
+      const check = () => {
+        if (!document.hidden && navigator.onLine) void registration.update().catch(() => {});
+      };
+      document.addEventListener('visibilitychange', check);
+      window.addEventListener('online', check);
+    },
     onOfflineReady() {
       setReady(true);
     },
@@ -60,6 +70,7 @@ function App() {
         recoveryError={boot.error}
         offlineReady={ready}
         updateAvailable={updateAvailable}
+        onUpdate={activateUpdate}
       />
     </>
   );

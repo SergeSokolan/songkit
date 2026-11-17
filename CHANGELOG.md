@@ -6,6 +6,14 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
+## [0.5.0] — 2026-11-17
+
+### Добавлено
+
+- Уведомление PWA о новой версии и обновление по кнопке после сохранения черновика (#28).
+
+Переход между сборками проверяется в Chromium и мобильном WebKit. Ручная проверка установленной PWA на iPhone выполняется отдельно.
+
 ## [0.4.2] — 2026-11-15
 
 Исправления кандидата 0.4.2-rc.1: ввод BPM (#20), модальный фокус (#21), действия брейков (#23), формы счётчика (#24) и прокрутка предпросмотра (#25). Пользователь разрешил выпуск для ручной проверки на production; приёмка на телефоне ещё не выполнена. Чеклист: docs/PHONE-CHECKLIST-0.4.2.md. Функция обновления PWA по кнопке планируется отдельно.
@@ -120,10 +128,11 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.5.0...HEAD
 [0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
 [0.4.0]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0
 [0.4.2-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...v0.4.2-rc.1
 [0.4.2]: https://github.com/SergeSokolan/songkit/compare/v0.4.1...v0.4.2
+[0.5.0]: https://github.com/SergeSokolan/songkit/compare/v0.4.2...v0.5.0

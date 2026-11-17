@@ -38,6 +38,7 @@ export function usePlayback(
     setPlaying(false);
     setLoading(false);
     pauseRef.current(tick);
+    return tick;
   }, []);
   useEffect(() => {
     const hide = () => {
