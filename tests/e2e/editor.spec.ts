@@ -422,21 +422,23 @@ test('four-bar fill preview cancels, adds toms atomically and survives offline r
     .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
     .click();
   await expect(page.getByLabel('Начало брейка')).toHaveValue('14');
-  await page.getByRole('button', { name: 'Свободнее · Редкий' }).click();
+  await page.getByRole('button', { name: 'Послушать: Свободнее · Редкий' }).click();
   await expect(page.getByRole('button', { name: 'Применить брейк' })).toBeVisible();
   await expect(page.locator('.fill-selected')).not.toHaveCount(0);
-  const supported = await startOrCheckUnsupported(page);
-  await page.getByRole('button', { name: 'Движение · Средний' }).click();
+  const supported = await page.evaluate(() => typeof AudioContext === 'function');
+  if (supported)
+    await expect(page.getByRole('button', { name: 'Пауза', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Послушать: Движение · Средний' }).click();
   if (supported) {
     await expect(page.getByRole('button', { name: 'Пауза', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Пауза', exact: true }).click();
   }
 
-  await page.getByRole('button', { name: 'Отменить предпросмотр' }).click();
+  await page.getByRole('button', { name: 'Остановить: Движение · Средний' }).click();
   await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
   for (const name of ['Том 1 (добавить)', 'Том 2 (добавить)', 'Том 3 (добавить)'])
     await page.getByRole('checkbox', { name, exact: true }).check();
-  const tomFill = page.getByRole('button', { name: 'Спуск по томам · Средний' });
+  const tomFill = page.getByRole('button', { name: 'Послушать: Спуск по томам · Средний' });
   await expect(tomFill).toBeDisabled();
   await page.getByRole('checkbox', { name: /Разрешаю добавить/ }).check();
   await tomFill.click();
@@ -455,7 +457,7 @@ test('four-bar fill preview cancels, adds toms atomically and survives offline r
   await page
     .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
     .click();
-  await expect(page.getByRole('button', { name: 'Свободнее · Редкий' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Послушать: Свободнее · Редкий' })).toBeEnabled();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'MIDI', exact: true }).click();
   expect((await download).suggestedFilename()).toBe('songkit.mid');
@@ -468,7 +470,7 @@ test('editing the confirmed bit invalidates an unapplied fill even after undo', 
   await page
     .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
     .click();
-  await page.getByRole('button', { name: 'Движение · Средний' }).click();
+  await page.getByRole('button', { name: 'Послушать: Движение · Средний' }).click();
   await page.getByRole('button', { name: 'Увеличить темп' }).click();
   await expect(page.getByRole('button', { name: 'Применить брейк' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Отменить', exact: true }).click();

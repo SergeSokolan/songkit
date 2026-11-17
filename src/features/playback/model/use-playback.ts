@@ -75,8 +75,9 @@ export function usePlayback(
       disposeAudio();
     };
   }, [stop]);
-  const play = async (startAt?: number) => {
-    if (playing || loading) return;
+  const play = async (candidate?: Audition) => {
+    if (candidate) stop();
+    else if (playing || loading) return;
     const request = ++requestRef.current;
     setLoading(true);
     setError('');
@@ -88,7 +89,8 @@ export function usePlayback(
       schedulerRef.current ??= new Scheduler(audioRef.current, (tick) => {
         return activeAudition.current.resolve(patternRef.current, auditionRef.current, tick);
       });
-      schedulerRef.current.start(startAt ?? positionRef.current);
+      if (candidate) auditionRef.current = candidate;
+      schedulerRef.current.start(candidate?.start ?? positionRef.current);
       setPlaying(true);
     } catch (e) {
       if (request === requestRef.current)

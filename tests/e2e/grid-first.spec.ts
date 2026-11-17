@@ -27,7 +27,7 @@ test('first screen exposes the editor and retains access to library and files', 
   await expect(page.getByRole('heading', { name: 'Ритмы и брейки' })).toBeInViewport();
   await page.getByRole('button', { name: 'Базовые ритмы', exact: true }).tap();
   await page
-    .getByRole('button', { name: /Предпросмотр:/ })
+    .getByRole('button', { name: /Послушать:/ })
     .first()
     .tap();
   await expect(page.getByRole('button', { name: 'Применить ритм' })).toBeVisible();

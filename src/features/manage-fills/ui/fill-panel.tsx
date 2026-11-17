@@ -108,16 +108,13 @@ export function FillPanel(props: Props) {
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allowMissing)}
                   >
-                    Предпросмотр: {card.name}
+                    {activeId === card.id ? 'Остановить' : 'Послушать'}: {card.name}
                   </button>
                   {previewing && activeId === card.id && (
                     <div className="preview-actions">
                       {previewDetails}
                       <button className="secondary-button" onClick={onApply}>
                         Применить брейк
-                      </button>
-                      <button className="secondary-button" onClick={onCancel}>
-                        Отменить предпросмотр
                       </button>
                     </div>
                   )}

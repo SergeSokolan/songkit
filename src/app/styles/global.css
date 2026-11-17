@@ -1775,3 +1775,79 @@ input[type='range'] {
   flex-basis: 100%;
   margin: 0;
 }
+
+/* Native controls keep the platform picker and keyboard behavior. */
+.length-control select,
+.instrument-picker select,
+.fills-panel select {
+  appearance: none;
+  min-height: 44px;
+  padding: 0 34px 0 12px;
+  border: 1px solid #59664e;
+  border-radius: 8px;
+  background: #292f25
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23c7d6b9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  color: #e4ecdd;
+  color-scheme: dark;
+  font-size: 14px;
+  cursor: pointer;
+}
+.length-control select:hover,
+.instrument-picker select:hover,
+.fills-panel select:hover {
+  border-color: var(--green);
+}
+.fills-content label:has(> input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.fills-content input[type='checkbox'] {
+  appearance: none;
+  display: grid;
+  flex: 0 0 22px;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid #697b5d;
+  border-radius: 5px;
+  background: #292f25;
+  color: #232f1d;
+  cursor: pointer;
+}
+.fills-content input[type='checkbox']:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+.fills-content input[type='checkbox']:checked::before {
+  content: '';
+  width: 10px;
+  height: 5px;
+  border: solid currentColor;
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg);
+}
+@media (max-width: 760px) {
+  .length-control select,
+  .instrument-picker select,
+  .fills-panel select {
+    font-size: 16px;
+  }
+}
+@media (forced-colors: active) {
+  .length-control select,
+  .instrument-picker select,
+  .fills-panel select,
+  .fills-content input[type='checkbox'] {
+    appearance: auto;
+    background: none;
+    color-scheme: normal;
+  }
+  .fills-content input[type='checkbox']:checked::before {
+    content: none;
+  }
+}

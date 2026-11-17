@@ -163,7 +163,7 @@ export function AdvancedFillPanel({
                 aria-pressed={activeId === f.id}
                 onClick={() => onPreview(f, range, false)}
               >
-                {f.name} · {f.density}
+                {activeId === f.id ? 'Остановить' : 'Послушать'}: {f.name} · {f.density}
               </button>
             ))}
             <button
@@ -193,7 +193,7 @@ export function AdvancedFillPanel({
                   disabled={!fill?.events.length || (!!missing && !allowMissing)}
                   onClick={() => fill && onPreview(fill, range, allowMissing)}
                 >
-                  {t.name} · {t.density}
+                  {activeId === t.id ? 'Остановить' : 'Послушать'}: {t.name} · {t.density}
                 </button>
               );
             })}
@@ -210,9 +210,6 @@ export function AdvancedFillPanel({
                 {previewDetails}
                 <button className="secondary-button" onClick={onApply}>
                   Применить брейк
-                </button>
-                <button className="secondary-button" onClick={onCancel}>
-                  Отменить предпросмотр
                 </button>
               </div>
             )}

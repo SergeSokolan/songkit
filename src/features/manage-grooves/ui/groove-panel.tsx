@@ -112,16 +112,13 @@ export function GroovePanel({
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allow)}
                   >
-                    Предпросмотр: {card.name}
+                    {activeId === card.id ? 'Остановить' : 'Послушать'}: {card.name}
                   </button>
                   {activeId === card.id && (
                     <div className="preview-actions">
                       {previewDetails}
                       <button className="secondary-button" onClick={onApply}>
                         Применить ритм
-                      </button>
-                      <button className="secondary-button" onClick={onCancel}>
-                        Отменить предпросмотр
                       </button>
                     </div>
                   )}

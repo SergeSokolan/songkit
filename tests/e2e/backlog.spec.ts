@@ -75,17 +75,13 @@ test('catalog preview and groove apply leave unrelated bars intact, offline', as
   await page.getByRole('button', { name: 'Такт 3', exact: true }).click();
   await page.getByRole('button', { name: 'Базовые ритмы', exact: true }).click();
   await page.getByLabel('Жанр ритма').selectOption('metal');
-  await page
-    .getByRole('button', { name: 'Предпросмотр: Ровная двойная бочка', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Послушать: Ровная двойная бочка', exact: true }).click();
   await page.getByRole('button', { name: 'Применить ритм', exact: true }).click();
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
   await page.getByLabel('Жанр брейка').selectOption('metal');
   await page.getByLabel('Длительность брейка').selectOption('1');
   await page.getByLabel('Добавить недостающие дорожки при применении', { exact: true }).check();
-  await page
-    .getByRole('button', { name: 'Предпросмотр: 4 руками + 2 бочкой', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Послушать: 4 руками + 2 бочкой', exact: true }).click();
   await expect(page.getByRole('button', { name: '1/16T', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -105,7 +101,7 @@ test('catalog preview and groove apply leave unrelated bars intact, offline', as
   await page.getByRole('button', { name: 'Базовые ритмы', exact: true }).click();
   await page.getByLabel('Жанр ритма').selectOption('jazz');
   await expect(
-    page.getByRole('button', { name: 'Предпросмотр: Райд: обратный свинг', exact: true }),
+    page.getByRole('button', { name: 'Послушать: Райд: обратный свинг', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Такт 1', exact: true }).click();
   await page.getByRole('button', { name: '1/8', exact: true }).click();

@@ -85,20 +85,6 @@ export function DrumEditor({
       window.removeEventListener('pagehide', hide);
     };
   }, []);
-  const previewFill = (fill: Fill, range: FillRange, allowMissing: boolean) => {
-    setFillPreview({
-      base: revision,
-      pattern: applyFill(pattern, range, fill, allowMissing),
-      range,
-      fillId: fill.id,
-      view: {
-        ...view,
-        bar: Math.floor(range.start / BAR_TICKS),
-        grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
-        scrollLeft: 0,
-      },
-    });
-  };
   const [view, setView] = useState<EditorView>(initial?.view ?? defaultView);
   const [saveEnabled, setSaveEnabled] = useState(!recoveryError);
   const [notice, setNotice] = useState('');
@@ -146,6 +132,30 @@ export function DrumEditor({
         }
       : undefined,
   );
+  const cancelPreview = () => {
+    if (activePreview) playback.stop();
+    setFillPreview(null);
+  };
+  const previewFill = (fill: Fill, range: FillRange, allowMissing: boolean) => {
+    if (activePreview?.fillId === fill.id) {
+      cancelPreview();
+      return;
+    }
+    const nextPattern = applyFill(pattern, range, fill, allowMissing);
+    setFillPreview({
+      base: revision,
+      pattern: nextPattern,
+      range,
+      fillId: fill.id,
+      view: {
+        ...view,
+        bar: Math.floor(range.start / BAR_TICKS),
+        grid: fill.events.some((e) => e.tick % 120 !== 0) ? '16T' : 16,
+        scrollLeft: 0,
+      },
+    });
+    void playback.play({ pattern: nextPattern, start: range.start, end: range.end });
+  };
   const previewDetails = activePreview && (
     <>
       <p role="status">
@@ -166,15 +176,6 @@ export function DrumEditor({
           </>
         )}
       </p>
-      <button
-        className="secondary-button"
-        disabled={playback.loading}
-        onClick={
-          playback.playing ? playback.stop : () => void playback.play(activePreview.range.start)
-        }
-      >
-        {playback.playing ? 'Пауза предпросмотра' : 'Играть предпросмотр'}
-      </button>
       {playback.error && (
         <p role="alert" className="inline-notice warning">
           {playback.error}
@@ -398,7 +399,7 @@ export function DrumEditor({
                   aria-label={`Такт ${i + 1}`}
                   aria-pressed={visibleBar === i}
                   onClick={() => {
-                    setFillPreview(null);
+                    cancelPreview();
                     setView((v) => ({ ...v, bar: i, scrollLeft: 0 }));
                   }}
                 >
@@ -539,7 +540,7 @@ export function DrumEditor({
             activeId={activePreview?.fillId}
             onPreview={previewFill}
             previewDetails={previewDetails}
-            onCancel={() => setFillPreview(null)}
+            onCancel={cancelPreview}
             onApply={() => {
               if (activePreview) {
                 change(() => activePreview.pattern);
@@ -555,7 +556,7 @@ export function DrumEditor({
             activeId={activePreview?.fillId}
             onPreview={previewFill}
             previewDetails={previewDetails}
-            onCancel={() => setFillPreview(null)}
+            onCancel={cancelPreview}
             onApply={() => {
               if (activePreview) {
                 change(() => activePreview.pattern);
