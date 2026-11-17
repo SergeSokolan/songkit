@@ -32,13 +32,19 @@ try {
     .filter(Boolean);
   let failed = false;
   for (const path of paths) {
+    if (additions.some(([, pattern]) => pattern.test(path))) {
+      console.error('[security] A changed path contains a recognizable credential. Path hidden.');
+      failed = true;
+      continue;
+    }
     const name = basename(path);
     if (sensitivePath.test(name) && !examplePath.test(name)) {
-      console.error(`[security] Sensitive filename: ${path}`);
+      console.error(`[security] Sensitive filename: ${JSON.stringify(path)}`);
       failed = true;
       continue;
     }
     const change = git(
+      '--literal-pathspecs',
       'diff',
       ...range,
       '--no-ext-diff',
@@ -48,8 +54,10 @@ try {
       path,
     );
     const flags = new Set();
+    let inHunk = false;
     for (const line of change.split('\n')) {
-      if (!line.startsWith('+') || line.startsWith('+++')) continue;
+      if (line.startsWith('@@ ')) inHunk = true;
+      if (!inHunk || !line.startsWith('+')) continue;
       for (const [label, pattern] of additions) {
         if (pattern.test(line)) flags.add(label);
       }
@@ -62,7 +70,7 @@ try {
       }
     }
     if (flags.size > 0) {
-      console.error(`[security] ${path}: ${[...flags].join(', ')}`);
+      console.error(`[security] ${JSON.stringify(path)}: ${[...flags].join(', ')}`);
       failed = true;
     }
   }

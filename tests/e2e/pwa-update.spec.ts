@@ -141,6 +141,16 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
     await page.reload();
     await expect(page.locator('.app-version')).toHaveText('v0.0.2');
     await expect(tempo).toHaveValue('239');
+
+    // Redeploy the previous verified build and use the regular update flow.
+    current = versions[0];
+    await context.setOffline(false);
+    await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
+    await expect(page.getByRole('button', { name: 'Обновить', exact: true })).toBeVisible();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Обновить', exact: true }).click();
+    await expect(page.locator('.app-version')).toHaveText('v0.0.1');
+    await expect(tempo).toHaveValue('239');
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));

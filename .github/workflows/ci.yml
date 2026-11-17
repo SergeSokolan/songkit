@@ -29,8 +29,16 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           git fetch --no-tags --depth=1 origin "$PR_BASE_SHA"
-          node scripts/check-change-security.mjs "$PR_BASE_SHA"
-      - run: npm ci
+          # Bootstrap the scanner on its first PR; subsequent runs use the base copy.
+          if git cat-file -e "$PR_BASE_SHA:scripts/check-change-security.mjs"; then
+            git show "$PR_BASE_SHA:scripts/check-change-security.mjs" > "$RUNNER_TEMP/check-change-security.mjs"
+            node "$RUNNER_TEMP/check-change-security.mjs" "$PR_BASE_SHA"
+          else
+            node scripts/check-change-security.mjs "$PR_BASE_SHA"
+          fi
+      - name: Audit locked dependencies
+        run: node scripts/audit-dependencies.mjs
+      - run: npm ci --ignore-scripts --no-audit
       - run: npm run check
       - name: Install browser dependencies and browsers
         timeout-minutes: 6
