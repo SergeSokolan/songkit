@@ -14,21 +14,8 @@ import {
   VexFlow,
   Voice,
 } from 'vexflow/core';
-import { strengthOf, type Instrument, type Pattern } from '../../../entities/drum-pattern';
-import { scoreMeasure } from '../model/score';
-
-// Written positions for percussion clef, independent of MIDI pitches.
-export const keys: Record<Instrument, string> = {
-  kick: 'f/4',
-  snare: 'c/5',
-  tom1: 'e/5',
-  tom2: 'd/5',
-  tom3: 'a/4',
-  hat: 'g/5/x',
-  ride: 'f/5/x',
-  crash1: 'a/5/x',
-  crash2: 'b/5/x',
-};
+import { strengthOf, type Pattern } from '../../../entities/drum-pattern';
+import { scoreKeys, scoreMeasure } from '../model/score';
 
 VexFlow.setFonts('Bravura');
 VexFlow.setTextFonts('Arial');
@@ -39,23 +26,29 @@ export function engrave(container: HTMLDivElement, pattern: Pattern, bar: number
   const tuplets: Tuplet[] = [];
   const voices = scoreMeasure(pattern, bar).map(({ stem, notes, tuplets: groups }) => {
     const direction = stem === 'up' ? Stem.UP : Stem.DOWN;
-    const glyphs = notes.map(({ duration, events, hidden }) => {
-      if (hidden) return new GhostNote(duration);
+    const grouped = new Set(groups.flat());
+    const glyphs = notes.map(({ duration, events, hidden }, noteIndex) => {
+      if (hidden && !grouped.has(noteIndex)) return new GhostNote(duration);
       const note = new StaveNote({
         keys: events.length
-          ? events.map((event) => keys[event.instrument])
+          ? events.map((event) => scoreKeys[event.instrument])
           : [stem === 'up' ? 'd/5' : 'g/4'],
         duration: events.length ? duration : `${duration}r`,
         stemDirection: direction,
         clef: 'percussion',
         alignCenter: duration === 'w',
       });
+      if (hidden) note.setStyle({ fillStyle: 'transparent', strokeStyle: 'transparent' });
       for (const [index, event] of events.entries()) {
         const strength = strengthOf(event.velocity);
         if (strength === 'ghost') {
           note.addModifier(new Parenthesis(Modifier.Position.LEFT), index);
           note.addModifier(new Parenthesis(Modifier.Position.RIGHT), index);
-        } else if (strength === 'accent') {
+        } else if (
+          strength === 'accent' &&
+          events.every((hit) => strengthOf(hit.velocity) === 'accent') &&
+          index === 0
+        ) {
           note.addModifier(
             new Articulation('a>').setPosition(
               stem === 'up' ? Modifier.Position.ABOVE : Modifier.Position.BELOW,

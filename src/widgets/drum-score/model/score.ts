@@ -1,5 +1,18 @@
 import { BAR_TICKS, PPQ, type DrumEvent, type Pattern } from '../../../entities/drum-pattern';
 
+// Top to bottom on the percussion staff, with the VexFlow key at each position.
+export const scoreKeys = {
+  crash2: 'b/5/x',
+  crash1: 'a/5/x',
+  hat: 'g/5/x',
+  ride: 'f/5/x',
+  tom1: 'e/5',
+  tom2: 'd/5',
+  snare: 'c/5',
+  tom3: 'a/4',
+  kick: 'f/4',
+} as const;
+
 type Duration = 'w' | 'q' | '8' | '16' | '32';
 type Hand = 'up' | 'down';
 export interface ScoreNote {
@@ -12,6 +25,7 @@ export interface ScoreVoice {
   stem: Hand;
   notes: ScoreNote[];
   tuplets: number[][];
+  auxiliary?: boolean;
 }
 
 function straightBeat(notes: ScoreNote[], start: number, hits: Map<number, DrumEvent[]>) {
@@ -32,16 +46,31 @@ function straightBeat(notes: ScoreNote[], start: number, hits: Map<number, DrumE
   }
 }
 
-function tripletBeat(voice: ScoreVoice, start: number, hits: Map<number, DrumEvent[]>) {
+function tripletBeat(
+  voice: ScoreVoice,
+  start: number,
+  hits: Map<number, DrumEvent[]>,
+  sharedAnchors?: Map<number, DrumEvent[]>,
+) {
   // 3 eighths take one beat. A sixteenth-note triplet takes one half-beat.
   const pairs = [...hits.keys()].every((tick) => (tick - start) % 320 === 0) ? 1 : 2;
   const step = 320 / pairs;
   for (let group = 0; group < pairs; group++) {
+    const first = start + group * 3 * step;
+    if (![...hits.keys()].some((tick) => tick >= first && tick < first + 3 * step)) {
+      voice.notes.push({ tick: first, duration: '8', events: [], hidden: voice.auxiliary });
+      continue;
+    }
     const indexes = [];
     for (let i = 0; i < 3; i++) {
-      const tick = start + (group * 3 + i) * step;
+      const tick = first + i * step;
       indexes.push(voice.notes.length);
-      voice.notes.push({ tick, duration: pairs === 1 ? '8' : '16', events: hits.get(tick) ?? [] });
+      voice.notes.push({
+        tick,
+        duration: pairs === 1 ? '8' : '16',
+        events: hits.get(tick) ?? [],
+        hidden: sharedAnchors?.has(tick),
+      });
     }
     voice.tuplets.push(indexes);
   }
@@ -54,7 +83,12 @@ export function scoreMeasure(pattern: Pattern, bar: number): ScoreVoice[] {
     const part = events.filter((event) => (event.instrument === 'kick') === (stem === 'down'));
     if (!part.length) continue;
     const primary: ScoreVoice = { stem, notes: [], tuplets: [] };
-    const alternate: ScoreVoice = { stem, notes: [], tuplets: [] };
+    const alternate: ScoreVoice = {
+      stem: stem === 'up' ? 'down' : 'up',
+      notes: [],
+      tuplets: [],
+      auxiliary: true,
+    };
     let hasMixedBeat = false;
     for (let beat = 0; beat < 4; beat++) {
       const start = bar * BAR_TICKS + beat * PPQ;
@@ -74,7 +108,12 @@ export function scoreMeasure(pattern: Pattern, bar: number): ScoreVoice[] {
       }
       if (hasTriplet && hasStraight) {
         hasMixedBeat = true;
-        tripletBeat(alternate, start, new Map([...grouped].filter(([tick]) => tick % 120 !== 0)));
+        tripletBeat(
+          alternate,
+          start,
+          new Map([...grouped].filter(([tick]) => tick % 120 !== 0)),
+          new Map([...grouped].filter(([tick]) => tick % 120 === 0)),
+        );
       } else {
         alternate.notes.push({ tick: start, duration: 'q', events: [], hidden: true });
       }
