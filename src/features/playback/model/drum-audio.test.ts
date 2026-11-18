@@ -46,24 +46,46 @@ describe('audio adapter', () => {
       return context;
     });
     vi.stubGlobal('AudioContext', constructor);
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+    const responses = new Map<string, object>();
+    const encoded = new Map<ArrayBuffer, object>();
+    context.decodeAudioData.mockImplementation((bytes: ArrayBuffer) =>
+      Promise.resolve(encoded.get(bytes)!),
+    );
+    const fetch = vi.fn(async (url: string) => {
+      const bytes = new ArrayBuffer(8);
+      const buffer = { url };
+      responses.set(url, buffer);
+      encoded.set(bytes, buffer);
+      return { ok: true, arrayBuffer: async () => bytes };
+    });
     vi.stubGlobal('fetch', fetch);
     const audio = new DrumAudio();
     await audio.prepare();
     await audio.prepare();
     expect(constructor).toHaveBeenCalledExactlyOnceWith({ latencyHint: 'interactive' });
     expect(context.resume).not.toHaveBeenCalled();
-    expect(fetch).toHaveBeenCalledTimes(9);
+    expect(fetch).toHaveBeenCalledTimes(27);
     expect(audio.now()).toBe(1);
     audio.preview({ id: 'snare:0', instrument: 'snare', tick: 0, velocity: 35 });
     expect(source.start).toHaveBeenCalledWith(1.005);
-    expect(gain.gain.value).toBeLessThan(0.2);
+    expect(source.buffer).toBe(
+      responses.get(`${import.meta.env.BASE_URL}sounds/muldjord/snare-soft.wav`),
+    );
+    expect(gain.gain.value).toBeCloseTo(0.32);
     audio.silence();
     expect(source.stop).toHaveBeenCalledOnce();
     source.onended?.();
     expect(gain.disconnect).toHaveBeenCalledOnce();
+    for (const [velocity, layer] of [
+      [80, 'medium'],
+      [115, 'hard'],
+    ] as const) {
+      audio.hit({ id: 'snare:0', instrument: 'snare', tick: 0, velocity }, 1.01);
+      expect(source.buffer).toBe(
+        responses.get(`${import.meta.env.BASE_URL}sounds/muldjord/snare-${layer}.wav`),
+      );
+      source.onended?.();
+    }
     const suspended = vi.fn();
     audio.onSuspend = suspended;
     context.state = 'suspended';

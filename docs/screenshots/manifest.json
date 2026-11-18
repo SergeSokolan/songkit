@@ -1,6 +1,6 @@
 {
-  "version": "0.8.0",
-  "uiSourceHash": "d91fabf7fa5c82359f41b6826b8febc568f8ef99b5548d8bc03b0753b0fa633f",
+  "version": "0.9.0",
+  "uiSourceHash": "bdd4342a616b24fc44c0af336e6ef8247a68ce1a5aba8d56755dcce3baa1c1f2",
   "capturedOn": "2026-11-18",
   "browser": "Playwright Chromium, CSS viewports; not a real iPhone",
   "files": [

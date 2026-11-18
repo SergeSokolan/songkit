@@ -1,9 +1,9 @@
-# Лицензия звуков прототипа
+# Лицензия звуков
 
-Файлы public/sounds/kick.wav, snare.wav, hat.wav, tom1.wav, tom2.wav, tom3.wav, ride.wav, crash1.wav, crash2.wav созданы кодом scripts/generate-sounds.mjs специально для SongKit. Чужие записи и семплы не использованы. Генерация детерминирована, sample rate 22050 Hz, PCM 16-bit mono.
+Текущий банк SongKit основан на **FreePats MuldjordKit**. Drum samples provided by DrumGizmo.org. Исходные записи Lars Muldjord и DrumGizmo.org распространены по CC BY 4.0. FreePats подготовил стереосведение и инструмент SFZ. SongKit отобрал тихий, обычный и сильный удар для каждого из девяти инструментов и подготовил компактные моно WAV с обрезкой, затуханием и коррекцией уровня.
 
-Все девять звуковых файлов предоставляются по CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Точные исходные файлы и изменения указаны в `public/sounds/muldjord/`. [Исходный банк FreePats](https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
-Синтезированные one-shot звуки временные: акустический банк требует отдельного выбора и проверки лицензии. Лицензия всего приложения этим документом не определяется.
+В версиях до 0.9.0 использовались девять собственных синтезированных CC0 WAV из `scripts/generate-sounds.mjs`. [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode)
 
-Основные runtime-зависимости: React/React DOM — MIT, Workbox — MIT. Точные версии закреплены в package-lock.json. Тексты лицензий установленных пакетов находятся в node_modules соответствующих пакетов. При добавлении ресурсов обновлять реестр; запрещены семплы с разрешением только на готовые музыкальные произведения без права распространения самих файлов.
+Лицензия всего приложения этим документом не определяется. Уведомления о лицензиях runtime-зависимостей находятся в `public/THIRD_PARTY_LICENSES.txt`.

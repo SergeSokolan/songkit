@@ -236,15 +236,16 @@ test('adds the full kit in height order, undoes additions, restores and plays of
   await expect(page.locator('.track-label strong')).toHaveText(expected);
   const samples = await page.evaluate(async () =>
     Promise.all(
-      ['kick', 'snare', 'tom1', 'tom2', 'tom3', 'hat', 'ride', 'crash1', 'crash2'].map(
-        async (instrument) => {
-          const response = await fetch(`sounds/${instrument}.wav`);
-          return response.ok && (await response.arrayBuffer()).byteLength > 44;
-        },
+      ['kick', 'snare', 'tom1', 'tom2', 'tom3', 'hat', 'ride', 'crash1', 'crash2'].flatMap(
+        (instrument) =>
+          ['soft', 'medium', 'hard'].map(async (layer) => {
+            const response = await fetch(`sounds/muldjord/${instrument}-${layer}.wav`);
+            return response.ok && (await response.arrayBuffer()).byteLength > 44;
+          }),
       ),
     ),
   );
-  expect(samples).toEqual(Array(9).fill(true));
+  expect(samples).toEqual(Array(27).fill(true));
   await expect(
     page.getByRole('button', { name: 'Том 2, такт 1, шаг 1, Обычный', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');

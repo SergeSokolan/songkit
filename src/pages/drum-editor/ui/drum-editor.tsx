@@ -779,6 +779,14 @@ export function DrumEditor({
       </main>
       <footer className="site-footer">
         <span>SONGKIT / DRUM WORKSHOP</span>
+        <a
+          className="text-button"
+          href={`${import.meta.env.BASE_URL}sounds/muldjord/ATTRIBUTION.txt`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t('Звуки MuldjordKit', 'MuldjordKit sounds')}
+        </a>
         <a className="text-button" href={guideHref} onClick={onGuide}>
           {t('Инструкция по установке', 'Installation guide')}
         </a>
