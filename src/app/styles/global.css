@@ -936,6 +936,8 @@ input[type='range'] {
 .site-footer {
   border-top: 1px solid var(--separator);
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   justify-content: space-between;
   padding: 22px 0 30px;
   color: var(--muted);

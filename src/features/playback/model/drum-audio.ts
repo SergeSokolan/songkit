@@ -1,11 +1,22 @@
-import { INSTRUMENTS, type DrumEvent, type Instrument } from '../../../entities/drum-pattern';
+import {
+  INSTRUMENTS,
+  strengthOf,
+  type DrumEvent,
+  type Instrument,
+} from '../../../entities/drum-pattern';
 import type { AudioDriver } from './scheduler';
 import { requestPlaybackSession, waitForAudioStart } from './audio-session';
+
+const layers = { ghost: 'soft', normal: 'medium', accent: 'hard' } as const;
+const referenceVelocity = { ghost: 35, normal: 80, accent: 115 } as const;
+type Layer = (typeof layers)[keyof typeof layers];
+type Sample = `${Instrument}-${Layer}`;
+
 /** Owns its context; importing this module never touches audio hardware. */
 export class DrumAudio implements AudioDriver {
   private context: AudioContext | null = null;
   onSuspend: () => void = () => {};
-  private buffers = new Map<Instrument, AudioBuffer>();
+  private buffers = new Map<Sample, AudioBuffer>();
   private sources = new Set<AudioBufferSourceNode>();
   private loading: Promise<void> | null = null;
   private generation = 0;
@@ -48,25 +59,34 @@ export class DrumAudio implements AudioDriver {
       throw new Error('Запуск звука отменён. Нажмите «Играть» повторно.');
   }
   private async load(context: AudioContext, generation: number): Promise<void> {
-    await Promise.all(
+    const loaded = await Promise.all(
       INSTRUMENTS.map(async (instrument) => {
-        const response = await fetch(`${import.meta.env.BASE_URL}sounds/${instrument}.wav`);
-        if (!response.ok) throw new Error('Не удалось загрузить звуки. Проверьте соединение.');
-        const buffer = await context.decodeAudioData(await response.arrayBuffer());
-        if (this.generation === generation) this.buffers.set(instrument, buffer);
+        const instrumentSamples = [];
+        for (const layer of Object.values(layers)) {
+          if (this.generation !== generation) return instrumentSamples;
+          const sample: Sample = `${instrument}-${layer}`;
+          const response = await fetch(`${import.meta.env.BASE_URL}sounds/muldjord/${sample}.wav`);
+          if (!response.ok) throw new Error('Не удалось загрузить звуки. Проверьте соединение.');
+          const buffer = await context.decodeAudioData(await response.arrayBuffer());
+          instrumentSamples.push([sample, buffer] as const);
+        }
+        return instrumentSamples;
       }),
     );
+    if (this.generation === generation) this.buffers = new Map(loaded.flat());
   }
   now(): number {
     return this.context?.currentTime ?? 0;
   }
   hit(event: DrumEvent, time: number): void {
-    const buffer = this.buffers.get(event.instrument);
+    const strength = strengthOf(event.velocity);
+    const buffer = this.buffers.get(`${event.instrument}-${layers[strength]}`);
     if (!this.context || !buffer) return;
     const source = this.context.createBufferSource(),
       gain = this.context.createGain();
     source.buffer = buffer;
-    gain.gain.value = Math.pow(event.velocity / 127, 1.4) * 0.8;
+    // Recorded layers supply most of the dynamic difference. Preserve a small velocity response inside each layer.
+    gain.gain.value = 0.32 * Math.pow(event.velocity / referenceVelocity[strength], 0.35);
     source.connect(gain).connect(this.context.destination);
     this.sources.add(source);
     source.onended = () => {

@@ -1,0 +1,15 @@
+MuldjordKit (FreePats stereo edition, 2020-10-18)
+
+Recorded by Lars Muldjord. Stereo edition assembled by Roberto for FreePats.
+Drum samples provided by DrumGizmo.org
+
+Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+
+FreePats edition: https://freepats.zenvoid.org/Percussion/acoustic-drum-kit.html#MuldjordKit
+Source revision: https://github.com/freepats/muldjordkit/tree/719fe72bc6693b94f1229674e202881145ab44ed
+Original kit: https://www.drumgizmo.org/wiki/doku.php?id=kits:muldjordkit
+
+SongKit selected three takes per instrument, mixed them to mono, aligned attacks,
+trimmed and faded tails, calibrated levels, and exported 16-bit PCM WAV.
+Per-file source and processing details are listed in PROVENANCE.json.
