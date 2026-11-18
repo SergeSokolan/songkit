@@ -33,6 +33,7 @@ import { useAutosave } from '../../../features/draft-recovery';
 import { exportMidi, exportProject, importProject } from '../../../features/export-pattern';
 import { InstrumentPicker } from '../../../widgets/instrument-picker';
 import { DrumGrid } from '../../../widgets/drum-grid';
+import { ScoreButton } from '../../../widgets/drum-score';
 import { TransportPanel } from '../../../widgets/transport-panel';
 import { Icon } from '../../../shared/ui/icon';
 import { useLanguage, instrumentName, type Language } from '../../../shared/i18n';
@@ -408,6 +409,7 @@ export function DrumEditor({
             <a className="secondary-button" href="#project-actions">
               {t('Файлы', 'Files')}
             </a>
+            <ScoreButton pattern={pattern} bar={bar} />
           </nav>
         </div>
         {recoveryError && !saveEnabled && (

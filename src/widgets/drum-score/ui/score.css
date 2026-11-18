@@ -1,0 +1,47 @@
+.score-dialog {
+  width: min(54rem, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  padding: clamp(12px, 3vw, 24px);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  overflow: auto;
+}
+
+.score-dialog::backdrop {
+  background: var(--scrim);
+}
+
+.score-heading,
+.score-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.score-heading {
+  justify-content: space-between;
+}
+
+.score-heading h2 {
+  margin: 0;
+}
+
+.score-paper {
+  background: #faf7ef;
+  color: #24231e;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.score-staff svg {
+  display: block;
+  max-width: none;
+}
+
+.score-legend {
+  margin-top: 12px;
+}
