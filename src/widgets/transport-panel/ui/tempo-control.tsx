@@ -1,11 +1,44 @@
 import { MIN_TEMPO as MIN, MAX_TEMPO as MAX } from '../../../entities/drum-pattern';
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../../shared/i18n';
+
 interface Props {
   tempo: number;
   onTempo: (tempo: number) => void;
 }
 const ROW = 48;
-const TEMPO_ERROR = `Введите целое число (${MIN}–${MAX} BPM).`;
+const copy = {
+  ru: {
+    tempo: 'Темп',
+    decrease: 'Уменьшить темп',
+    increase: 'Увеличить темп',
+    input: 'Темп BPM',
+    openPicker: 'Выбрать темп барабаном',
+    invalid: `Введите целое число (${MIN}–${MAX} BPM).`,
+    speed: 'Скорость',
+    pickerHelp: 'Прокрутите барабан или введите значение.',
+    wheel: 'Барабан темпа BPM',
+    exactValue: 'Точное значение',
+    newValue: 'Новое значение BPM',
+    cancel: 'Отмена',
+    done: 'Готово',
+  },
+  en: {
+    tempo: 'Tempo',
+    decrease: 'Decrease tempo',
+    increase: 'Increase tempo',
+    input: 'Tempo BPM',
+    openPicker: 'BPM tempo picker',
+    invalid: `Enter a whole number (${MIN}–${MAX} BPM).`,
+    speed: 'Tempo (BPM)',
+    pickerHelp: 'Scroll the wheel or enter a value.',
+    wheel: 'Tempo wheel',
+    exactValue: 'Exact value',
+    newValue: 'Exact value in BPM',
+    cancel: 'Cancel',
+    done: 'Done',
+  },
+};
 
 function parseTempo(value: string): number | null {
   const text = value.trim();
@@ -14,6 +47,7 @@ function parseTempo(value: string): number | null {
 }
 
 export function TempoControl({ tempo, onTempo }: Props) {
+  const t = copy[useLanguage()];
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(tempo);
   const [mainText, setMainText] = useState<string | null>(null);
@@ -99,13 +133,13 @@ export function TempoControl({ tempo, onTempo }: Props) {
   };
   return (
     <div className="tempo-control">
-      <span className="eyebrow">ТЕМП</span>
+      <span className="eyebrow">{t.tempo.toUpperCase()}</span>
       <div className="tempo-stepper">
         {([-1, 1] as const).map((direction) => (
           <button
             key={direction}
             className={`tempo-step ${direction < 0 ? 'minus' : 'plus'}`}
-            aria-label={direction < 0 ? 'Уменьшить темп' : 'Увеличить темп'}
+            aria-label={direction < 0 ? t.decrease : t.increase}
             disabled={direction < 0 ? tempo === MIN : tempo === MAX}
             onPointerDown={(e) => {
               if (e.button !== 0) return;
@@ -127,7 +161,7 @@ export function TempoControl({ tempo, onTempo }: Props) {
         <div className="tempo-value">
           <input
             ref={mainInput}
-            aria-label="Темп BPM"
+            aria-label={t.input}
             aria-describedby={mainInvalid ? 'tempo-input-status' : undefined}
             inputMode="numeric"
             enterKeyHint="done"
@@ -143,7 +177,7 @@ export function TempoControl({ tempo, onTempo }: Props) {
           />
           <button
             className="tempo-picker-open"
-            aria-label="Выбрать темп барабаном"
+            aria-label={t.openPicker}
             onClick={() => {
               setWheelDraft(latest.current.tempo);
               setOpen(true);
@@ -155,11 +189,11 @@ export function TempoControl({ tempo, onTempo }: Props) {
       </div>
       {mainInvalid && (
         <div id="tempo-input-status" className="small" role="status">
-          {TEMPO_ERROR}
+          {t.invalid}
         </div>
       )}
       <input
-        aria-label="Скорость"
+        aria-label={t.speed}
         type="range"
         min={MIN}
         max={MAX}
@@ -179,14 +213,16 @@ export function TempoControl({ tempo, onTempo }: Props) {
         }}
       >
         <div className="tempo-sheet">
-          <h2 id="tempo-title">Темп · {draft} BPM</h2>
-          <p>Прокрутите барабан или введите значение.</p>
+          <h2 id="tempo-title">
+            {t.tempo} · {draft} BPM
+          </h2>
+          <p>{t.pickerHelp}</p>
           <div
             className="tempo-wheel"
             ref={wheel}
             role="listbox"
             tabIndex={0}
-            aria-label="Барабан темпа BPM"
+            aria-label={t.wheel}
             aria-activedescendant={`bpm-${draft}`}
             onScroll={(e) => {
               const next = Math.max(
@@ -223,9 +259,9 @@ export function TempoControl({ tempo, onTempo }: Props) {
             ))}
           </div>
           <label>
-            Точное значение
+            {t.exactValue}
             <input
-              aria-label="Новое значение BPM"
+              aria-label={t.newValue}
               aria-invalid={pickerInvalid || undefined}
               aria-describedby={pickerInvalid ? 'tempo-picker-error' : undefined}
               inputMode="numeric"
@@ -242,15 +278,15 @@ export function TempoControl({ tempo, onTempo }: Props) {
           </label>
           {pickerInvalid && (
             <p id="tempo-picker-error" role="alert">
-              {TEMPO_ERROR}
+              {t.invalid}
             </p>
           )}
           <div className="fill-candidates">
             <button className="secondary-button" onClick={() => setOpen(false)}>
-              Отмена
+              {t.cancel}
             </button>
             <button className="secondary-button" onClick={confirm}>
-              Готово
+              {t.done}
             </button>
           </div>
         </div>

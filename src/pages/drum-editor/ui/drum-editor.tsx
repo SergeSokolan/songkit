@@ -1,6 +1,6 @@
 import { GroovePanel } from '../../../features/manage-grooves';
 import { FillPanel, applyFill, type Fill, type FillRange } from '../../../features/manage-fills';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   BAR_TICKS,
   PPQ,
@@ -28,6 +28,8 @@ import { InstrumentPicker } from '../../../widgets/instrument-picker';
 import { DrumGrid } from '../../../widgets/drum-grid';
 import { TransportPanel } from '../../../widgets/transport-panel';
 import { Icon } from '../../../shared/ui/icon';
+import { useLanguage, instrumentName, type Language } from '../../../shared/i18n';
+import { localizedMessage } from './localized-message';
 const hitPlural = new Intl.PluralRules('ru');
 const hitForms: Record<string, string> = {
   one: 'удар',
@@ -35,21 +37,32 @@ const hitForms: Record<string, string> = {
   many: 'ударов',
   other: 'удара',
 };
-function describePreviewRange({ start, end }: FillRange) {
+function describePreviewRange({ start, end }: FillRange, language: Language) {
   const firstBar = Math.floor(start / BAR_TICKS) + 1;
   const lastBar = Math.ceil(end / BAR_TICKS);
+  const english = language === 'en';
   if (start % BAR_TICKS === 0 && end % BAR_TICKS === 0) {
+    if (english)
+      return firstBar === lastBar ? `All of bar ${firstBar}` : `Bars ${firstBar}–${lastBar}`;
     return firstBar === lastBar ? `Такт ${firstBar} целиком` : `Такты ${firstBar}–${lastBar}`;
   }
   const boundary = (tick: number) => {
     const bar = Math.floor(tick / BAR_TICKS) + 1;
     const beat = 1 + (tick % BAR_TICKS) / PPQ;
-    return `такт ${bar}, доля ${beat.toLocaleString('ru-RU')}`;
+    return english
+      ? `bar ${bar}, beat ${beat.toLocaleString('en')}`
+      : `такт ${bar}, доля ${beat.toLocaleString('ru-RU')}`;
   };
-  const endLabel = end % BAR_TICKS === 0 ? `конец такта ${lastBar}` : boundary(end);
-  return `Участок: ${boundary(start)} → ${endLabel}`;
+  const endLabel =
+    end % BAR_TICKS === 0
+      ? english
+        ? `end of bar ${lastBar}`
+        : `конец такта ${lastBar}`
+      : boundary(end);
+  return `${english ? 'Range' : 'Участок'}: ${boundary(start)} → ${endLabel}`;
 }
 interface Props {
+  preferences?: ReactNode;
   initial: Draft | null;
   recoveryError: string;
   offlineReady: boolean;
@@ -57,12 +70,16 @@ interface Props {
   onUpdate: () => Promise<void>;
 }
 export function DrumEditor({
+  preferences,
   initial,
   recoveryError,
   offlineReady,
   updateAvailable,
   onUpdate,
 }: Props) {
+  const language = useLanguage();
+  const english = language === 'en';
+  const t = (ru: string, en: string) => (english ? en : ru);
   const { pattern, revision, change, canUndo, canRedo, undo, redo } = usePattern(
     initial?.pattern ?? demoPattern(),
   );
@@ -159,18 +176,21 @@ export function DrumEditor({
   const previewDetails = activePreview && (
     <>
       <p role="status">
-        {describePreviewRange(activePreview.range)}
-        {' · Дорожки замены: '}
-        {activePreview.range.tracks.map((track) => INSTRUMENT_DETAILS[track].name).join(', ')}.
+        {describePreviewRange(activePreview.range, language)}
+        {t(' · Дорожки замены: ', ' · Tracks to replace: ')}
+        {activePreview.range.tracks
+          .map((track) => instrumentName(language, track, INSTRUMENT_DETAILS[track].name))
+          .join(', ')}
+        .
         {activePreview.pattern.instruments.some(
           (track) => !pattern.instruments.includes(track),
         ) && (
           <>
             {' '}
-            Добавятся:{' '}
+            {t('Добавятся:', 'Tracks to add:')}{' '}
             {activePreview.pattern.instruments
               .filter((track) => !pattern.instruments.includes(track))
-              .map((track) => INSTRUMENT_DETAILS[track].name)
+              .map((track) => instrumentName(language, track, INSTRUMENT_DETAILS[track].name))
               .join(', ')}
             .
           </>
@@ -178,7 +198,7 @@ export function DrumEditor({
       </p>
       {playback.error && (
         <p role="alert" className="inline-notice warning">
-          {playback.error}
+          {localizedMessage(language, playback.error, 'Audio could not start.')}
         </p>
       )}
     </>
@@ -191,7 +211,10 @@ export function DrumEditor({
     }
     if (
       !window.confirm(
-        'Обновить SongKit? История отмены, неподтверждённый брейк и ввод темпа будут сброшены.',
+        t(
+          'Обновить SongKit? История отмены, неподтверждённый брейк и ввод темпа будут сброшены.',
+          'Update SongKit? Undo history, an unapplied fill and any unfinished tempo edit will reset.',
+        ),
       )
     )
       return;
@@ -227,7 +250,10 @@ export function DrumEditor({
       count < pattern.barCount &&
       pattern.events.some((e) => e.tick >= count * BAR_TICKS) &&
       !window.confirm(
-        'Удары за пределами новой длины будут удалены. Действие можно отменить. Продолжить?',
+        t(
+          'Удары за пределами новой длины будут удалены. Действие можно отменить. Продолжить?',
+          'Hits beyond the new length will be removed. You can undo this. Continue?',
+        ),
       )
     )
       return;
@@ -242,7 +268,10 @@ export function DrumEditor({
     if (
       (pattern.events.length || recoveryError) &&
       !window.confirm(
-        'Очистить текущую партию и заменить локальный черновик? Скачайте проект, если хотите сохранить его отдельно.',
+        t(
+          'Очистить текущую партию и заменить локальный черновик? Скачайте проект, если хотите сохранить его отдельно.',
+          'Clear the current pattern and replace the local draft? Download the project to keep a separate copy.',
+        ),
       )
     )
       return;
@@ -259,7 +288,12 @@ export function DrumEditor({
       if (updating.current) return;
       if (
         pattern.events.length &&
-        !window.confirm('Заменить текущую партию проектом из файла? Действие можно отменить.')
+        !window.confirm(
+          t(
+            'Заменить текущую партию проектом из файла? Действие можно отменить.',
+            'Replace the current pattern with the project from this file? You can undo this.',
+          ),
+        )
       )
         return;
       playback.reset();
@@ -289,27 +323,41 @@ export function DrumEditor({
           </span>
           songkit<span className="brand-dot">.</span>
         </a>
-        <span className="product-label">ВАША МУЗЫКАЛЬНАЯ МАСТЕРСКАЯ</span>
-        <span className={`connection-status ${offlineReady ? 'ready' : ''}`} role="status">
-          <span />
-          {offlineReady ? 'Доступно офлайн' : 'Подготовка офлайн…'}
-        </span>
+        <div className="header-meta">
+          <span className={`connection-status ${offlineReady ? 'ready' : ''}`} role="status">
+            <span />
+            {offlineReady
+              ? t('Доступно офлайн', 'Available offline')
+              : t('Подготовка офлайн…', 'Preparing offline access…')}
+          </span>
+          <a
+            className="github-link"
+            href="https://github.com/SergeSokolan/songkit"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('Исходный код SongKit на GitHub', 'SongKit source code on GitHub')}
+          >
+            <Icon name="github" size={18} />
+            <span className="app-version">v{import.meta.env.VITE_APP_VERSION ?? 'dev'}</span>
+          </a>
+        </div>
+        {preferences}
       </header>
       {updateAvailable && (
-        <section className="inline-notice" aria-label="Обновление SongKit">
+        <section className="inline-notice" aria-label={t('Обновление SongKit', 'SongKit update')}>
           <span role="status">
             {updateBusy
-              ? 'Обновляем…'
+              ? t('Обновляем…', 'Updating…')
               : updateDeferred
-                ? 'Обновление отложено.'
-                : 'Доступна новая версия SongKit.'}
+                ? t('Обновление отложено.', 'Update postponed.')
+                : t('Доступна новая версия SongKit.', 'A new version of SongKit is available.')}
           </span>
           <button
             className="secondary-button"
             disabled={updateBusy}
             onClick={() => void updateApp()}
           >
-            Обновить
+            {t('Обновить', 'Update')}
           </button>
           {!updateDeferred && (
             <button
@@ -317,37 +365,48 @@ export function DrumEditor({
               disabled={updateBusy}
               onClick={() => setUpdateDeferred(true)}
             >
-              Позже
+              {t('Позже', 'Later')}
             </button>
           )}
-          {updateError && <p role="alert">{updateError}</p>}
+          {updateError && (
+            <p role="alert">
+              {localizedMessage(language, updateError, 'Could not update the app.')}
+            </p>
+          )}
         </section>
       )}
       <main inert={updateBusy}>
         <div className="page-heading editor-heading">
-          <h1>Барабанный редактор</h1>
-          <nav className="editor-shortcuts" aria-label="Действия редактора">
+          <h1>{t('Барабанный редактор', 'Drum editor')}</h1>
+          <nav className="editor-shortcuts" aria-label={t('Действия редактора', 'Editor actions')}>
             <button className="secondary-button" onClick={newPattern}>
-              Новая партия
+              {t('Новая партия', 'New pattern')}
             </button>
             <a className="secondary-button" href="#pattern-library">
-              Ритмы и брейки
+              {t('Ритмы и брейки', 'Grooves and drum fills')}
             </a>
             <a className="secondary-button" href="#project-actions">
-              Файлы
+              {t('Файлы', 'Files')}
             </a>
           </nav>
         </div>
         {recoveryError && !saveEnabled && (
           <div role="alert" className="inline-notice warning">
-            Не удалось восстановить черновик: {recoveryError}. Старые данные не перезаписаны. Можно
-            скачать текущую партию или выбрать «Новая партия» для сброса.
+            {t('Не удалось восстановить черновик', 'Could not restore the draft')}:{' '}
+            {localizedMessage(language, recoveryError, 'Storage is unavailable')}.{' '}
+            {t(
+              'Старые данные не перезаписаны. Можно скачать текущую партию или выбрать «Новая партия» для сброса.',
+              'The previous draft is still on this device. Download this pattern or choose New pattern to reset the draft.',
+            )}
           </div>
         )}
         {notice && (
           <div className="inline-notice" role="status">
-            {notice}
-            <button aria-label="Убрать сообщение" onClick={() => setNotice('')}>
+            {localizedMessage(language, notice, '')}
+            <button
+              aria-label={t('Убрать сообщение', 'Dismiss message')}
+              onClick={() => setNotice('')}
+            >
               <Icon name="close" size={16} />
             </button>
           </div>
@@ -356,12 +415,12 @@ export function DrumEditor({
           <div className="card-topline">
             <div className="session-title">
               <span className="live-dot" />
-              <strong>Мой грув</strong>
+              <strong>{t('Мой грув', 'My groove')}</strong>
             </div>
             <div className="history-actions">
               <button
                 className="icon-button"
-                aria-label="Отменить"
+                aria-label={t('Отменить', 'Undo')}
                 disabled={!canUndo}
                 onClick={undo}
               >
@@ -369,7 +428,7 @@ export function DrumEditor({
               </button>
               <button
                 className="icon-button"
-                aria-label="Повторить"
+                aria-label={t('Повторить', 'Redo')}
                 disabled={!canRedo}
                 onClick={redo}
               >
@@ -387,30 +446,30 @@ export function DrumEditor({
           />
           {playback.error && !activePreview && (
             <div role="alert" className="inline-notice warning">
-              {playback.error}
+              {localizedMessage(language, playback.error, 'Audio could not start.')}
             </div>
           )}
           <div className="sequence-toolbar">
-            <div className="bar-tabs" aria-label="Такты">
+            <div className="bar-tabs" aria-label={t('Такты', 'Bars')}>
               {Array.from({ length: pattern.barCount }, (_, i) => (
                 <button
                   key={i}
                   className={`bar-tab ${visibleBar === i ? 'selected' : ''} ${playback.playing && Math.floor(playback.position / BAR_TICKS) === i ? 'sounding' : ''}`}
-                  aria-label={`Такт ${i + 1}`}
+                  aria-label={`${t('Такт', 'Bar')} ${i + 1}`}
                   aria-pressed={visibleBar === i}
                   onClick={() => {
                     cancelPreview();
                     setView((v) => ({ ...v, bar: i, scrollLeft: 0 }));
                   }}
                 >
-                  <span className="small">ТАКТ</span>
+                  <span className="small">{t('ТАКТ', 'BAR')}</span>
                   <strong>{String(i + 1).padStart(2, '0')}</strong>
                 </button>
               ))}
               {pattern.barCount < 4 && (
                 <button
                   className="add-bar"
-                  aria-label="Добавить такт"
+                  aria-label={t('Добавить такт', 'Add bar')}
                   onClick={() => resize(pattern.barCount + 1)}
                 >
                   <Icon name="plus" size={18} />
@@ -418,25 +477,25 @@ export function DrumEditor({
               )}
             </div>
             <label className="length-control">
-              <span>Длина</span>
+              <span>{t('Длина', 'Length')}</span>
               <select
-                aria-label="Количество тактов"
+                aria-label={t('Количество тактов', 'Number of bars')}
                 value={pattern.barCount}
                 onChange={(e) => resize(Number(e.target.value))}
               >
                 {[1, 2, 3, 4].map((n) => (
                   <option key={n} value={n}>
-                    {n} {n === 1 ? 'такт' : 'такта'}
+                    {n} {n === 1 ? t('такт', 'bar') : t('такта', 'bars')}
                   </option>
                 ))}
               </select>
             </label>
           </div>
           <div id="pattern-grid" className="grid-toolbar" tabIndex={-1}>
-            <span className="eyebrow">РИСУНОК</span>
+            <span className="eyebrow">{t('РИСУНОК', 'PATTERN')}</span>
             <div className="grid-controls">
-              <span>Сетка</span>
-              <div className="segmented" aria-label="Деление сетки">
+              <span>{t('Сетка', 'Grid')}</span>
+              <div className="segmented" aria-label={t('Деление сетки', 'Grid subdivision')}>
                 {GRIDS.map((grid) => (
                   <button
                     key={grid}
@@ -450,25 +509,42 @@ export function DrumEditor({
               </div>
             </div>
           </div>
-          <div className="grid-transport" aria-label="Транспорт у сетки">
+          <div
+            className="grid-transport"
+            aria-label={t('Транспорт у сетки', 'Grid playback controls')}
+          >
             <button
               className="secondary-button"
               disabled={playback.loading}
-              aria-label={playback.playing ? 'Пауза у сетки' : 'Играть у сетки'}
+              aria-label={
+                playback.playing
+                  ? t('Пауза у сетки', 'Pause at grid')
+                  : t('Играть у сетки', 'Play at grid')
+              }
               aria-busy={playback.loading}
               onClick={playback.playing ? playback.stop : () => void playback.play()}
             >
               <Icon name={playback.playing ? 'pause' : 'play'} />
             </button>
             <span>
-              {playback.error ? 'Ошибка звука' : activePreview ? 'Предпросмотр' : 'Партия'} · 4/4
+              {playback.error
+                ? t('Ошибка звука', 'Audio error')
+                : activePreview
+                  ? t('Предпросмотр', 'Preview')
+                  : t('Партия', 'Pattern')}{' '}
+              · 4/4
             </span>
           </div>
-          <p className="grid-entry-hint">Касания: пусто → обычный → тихий → пусто</p>
+          <p className="grid-entry-hint">
+            {t(
+              'Касания: пусто → обычный → тихий → пусто',
+              'Tap to cycle: empty → normal hit → ghost note → empty',
+            )}
+          </p>
           <fieldset
             disabled={!!activePreview}
             className="preview-grid"
-            aria-label="Редактор партии"
+            aria-label={t('Редактор партии', 'Pattern editor')}
           >
             <DrumGrid
               pattern={activePreview?.pattern ?? pattern}
@@ -489,15 +565,15 @@ export function DrumEditor({
             <div className="legend">
               <span>
                 <i className="legend-dot ghost" />
-                Тихий
+                {t('Тихий', 'Ghost note')}
               </span>
               <span>
                 <i className="legend-dot" />
-                Обычный
+                {t('Обычный', 'Normal hit')}
               </span>
               <span>
                 <i className="legend-dot accent" />
-                Акцент
+                {t('Акцент', 'Accent')}
               </span>
             </div>
           </div>
@@ -513,10 +589,18 @@ export function DrumEditor({
           <div className="card-bottom">
             <span className="save-status" role="status">
               <span className="save-dot" />
-              {saveEnabled ? autosave.status : 'Автосохранение приостановлено'}
+              {saveEnabled
+                ? localizedMessage(language, autosave.status, 'Saving…')
+                : t('Автосохранение приостановлено', 'Autosave paused')}
             </span>
             <span className="small muted">
-              {pattern.events.length} {hitForms[hitPlural.select(pattern.events.length)]} · 4/4
+              {pattern.events.length.toLocaleString(language)}{' '}
+              {english
+                ? pattern.events.length === 1
+                  ? 'hit'
+                  : 'hits'
+                : hitForms[hitPlural.select(pattern.events.length)]}{' '}
+              · 4/4
             </span>
           </div>
         </div>
@@ -527,9 +611,9 @@ export function DrumEditor({
           aria-labelledby="pattern-library-heading"
         >
           <div className="library-heading">
-            <h2 id="pattern-library-heading">Ритмы и брейки</h2>
+            <h2 id="pattern-library-heading">{t('Ритмы и брейки', 'Grooves and drum fills')}</h2>
             <a className="secondary-button" href="#pattern-grid">
-              К сетке
+              {t('К сетке', 'Back to grid')}
             </a>
           </div>
           <FillPanel
@@ -568,9 +652,12 @@ export function DrumEditor({
         </section>
         <div id="project-actions" className="below-editor" tabIndex={-1}>
           <p className="privacy-note">
-            <span className="privacy-icon">⌁</span>Ваш бит остаётся на вашем устройстве.
+            <span className="privacy-icon">⌁</span>
+            {t('Ваш бит остаётся на вашем устройстве.', 'Your beat stays on this device.')}
             <br />
-            <span>Без аккаунта. Без облака. Просто музыка.</span>
+            <span>
+              {t('Без аккаунта. Без облака. Просто музыка.', 'No account or cloud storage needed.')}
+            </span>
           </p>
           <div className="file-actions">
             <button className="secondary-button" onClick={() => exportMidi(pattern)}>
@@ -579,12 +666,12 @@ export function DrumEditor({
             </button>
             <button className="secondary-button" onClick={() => exportProject(pattern)}>
               <Icon name="download" size={18} />
-              Проект
+              {t('Проект', 'Project')}
             </button>
             <button
               className="icon-button"
-              title="Открыть проект"
-              aria-label="Открыть проект"
+              title={t('Открыть проект', 'Open project')}
+              aria-label={t('Открыть проект', 'Open project')}
               onClick={() => fileRef.current?.click()}
             >
               <Icon name="upload" />
@@ -603,7 +690,11 @@ export function DrumEditor({
             <div className="import-feedback" ref={importAlertRef} role="alert">
               {importError && (
                 <p className="inline-notice warning">
-                  {importError}. Выберите другой файл проекта SongKit.
+                  {localizedMessage(language, importError, 'Could not open the project')}.{' '}
+                  {t(
+                    'Выберите другой файл проекта SongKit.',
+                    'Choose a different SongKit project file.',
+                  )}
                 </p>
               )}
             </div>
@@ -612,20 +703,32 @@ export function DrumEditor({
         <section className="help-row">
           <div>
             <span className="help-index">01 /</span>
-            <h2>Соберите основу</h2>
-            <p>Бочка, малый и хэт. Касайтесь клетки: обычный удар, тихий удар, затем удаление.</p>
+            <h2>{t('Соберите основу', 'Build the foundation')}</h2>
+            <p>
+              {t(
+                'Бочка, малый и хэт. Касайтесь клетки: обычный удар, тихий удар, затем удаление.',
+                'Start with kick, snare and hi-hat. Tap a cell to add a hit, turn it into a ghost note, then remove it.',
+              )}
+            </p>
           </div>
           <div>
             <span className="help-index">02 /</span>
-            <h2>Добавьте деталей</h2>
-            <p>Переключитесь на 1/16 или 1/32. Прежние удары останутся на своих местах.</p>
+            <h2>{t('Добавьте деталей', 'Add detail')}</h2>
+            <p>
+              {t(
+                'Переключитесь на 1/16 или 1/32. Прежние удары останутся на своих местах.',
+                'Switch to 1/16 or 1/32. Existing hits stay in place.',
+              )}
+            </p>
           </div>
           <div>
             <span className="help-index">03 /</span>
-            <h2>Почувствуйте динамику</h2>
+            <h2>{t('Почувствуйте динамику', 'Shape the dynamics')}</h2>
             <p>
-              Повторное касание делает удар тихим. Перенос доступен через «Изменить / перенести
-              удар».
+              {t(
+                'Повторное касание делает удар тихим. Перенос доступен через «Изменить / перенести удар».',
+                'Tap again for a ghost note. Use Edit / move hit to move it.',
+              )}
             </p>
           </div>
         </section>
@@ -635,7 +738,12 @@ export function DrumEditor({
             onClick={() => {
               if (
                 pattern.events.length &&
-                !window.confirm('Заменить рисунок примером? Действие можно отменить.')
+                !window.confirm(
+                  t(
+                    'Заменить рисунок примером? Действие можно отменить.',
+                    'Replace the pattern with the example? You can undo this.',
+                  ),
+                )
               )
                 return;
               playback.reset();
@@ -643,22 +751,12 @@ export function DrumEditor({
               setView({ ...defaultView });
             }}
           >
-            Загрузить пример
+            {t('Загрузить пример', 'Load example')}
           </button>
         </div>
       </main>
       <footer className="site-footer">
         <span>SONGKIT / DRUM WORKSHOP</span>
-        <a
-          className="github-link"
-          href="https://github.com/SergeSokolan/songkit"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Исходный код SongKit на GitHub"
-        >
-          <Icon name="github" size={18} />
-          GitHub<span className="app-version">v{import.meta.env.VITE_APP_VERSION ?? 'dev'}</span>
-        </a>
       </footer>
     </div>
   );

@@ -13,8 +13,54 @@ import {
   type Instrument,
   type Grid,
 } from '../../../entities/drum-pattern';
+import { instrumentName, useLanguage } from '../../../shared/i18n';
 import { Icon } from '../../../shared/ui/icon';
-const strengthNames = { ghost: 'Тихий', normal: 'Обычный', accent: 'Акцент' };
+
+const copy = {
+  ru: {
+    edit: 'Изменить / перенести удар',
+    selectCell: 'Выберите клетку для изменения или переноса удара.',
+    selectDestination: (name: string) => `Выберите новое место на дорожке «${name}».`,
+    cancel: 'Отмена',
+    grid: 'Барабанная сетка',
+    beats: 'ДОЛИ',
+    bar: 'такт',
+    step: 'шаг',
+    empty: 'пусто',
+    offGrid: 'есть удары между делениями',
+    offGridTitle: 'Удары между делениями',
+    strength: 'Сила удара',
+    strengthHeading: 'СИЛА УДАРА',
+    strengthNames: { ghost: 'Тихий', normal: 'Обычный', accent: 'Акцент' },
+    velocity: 'сила',
+    close: 'Закрыть',
+    move: 'Перенести удар',
+    remove: 'Удалить',
+    editHelp:
+      'Выберите клетку для редактирования. Для переноса нажмите «Перенести удар», затем новое место.',
+  },
+  en: {
+    edit: 'Edit / move hit',
+    selectCell: 'Choose a cell to edit or move a hit.',
+    selectDestination: (name: string) => `Choose a new position on the ${name} track.`,
+    cancel: 'Cancel',
+    grid: 'Drum grid',
+    beats: 'BEATS',
+    bar: 'bar',
+    step: 'step',
+    empty: 'empty',
+    offGrid: 'there are hits between steps',
+    offGridTitle: 'Hits between steps',
+    strength: 'Hit strength',
+    strengthHeading: 'HIT STRENGTH',
+    strengthNames: { ghost: 'Ghost', normal: 'Normal', accent: 'Accent' },
+    velocity: 'velocity',
+    close: 'Close',
+    move: 'Move hit',
+    remove: 'Delete',
+    editHelp: 'Choose a cell to edit. To move the hit, select “Move hit” and then a new position.',
+  },
+};
 interface Selection {
   instrument: Instrument;
   tick: number;
@@ -43,6 +89,12 @@ export function DrumGrid({
   onHit,
   onMove,
 }: Props) {
+  const language = useLanguage();
+  const t = copy[language];
+  const tracks = displayInstruments(pattern).map((instrument) => ({
+    instrument,
+    name: instrumentName(language, instrument, INSTRUMENT_DETAILS[instrument].name),
+  }));
   const [editing, setEditing] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [moving, setMoving] = useState<Selection | null>(null);
@@ -59,7 +111,6 @@ export function DrumGrid({
   const closeButton = useRef<HTMLButtonElement>(null);
   const originCell = useRef<HTMLButtonElement>(null);
   const suppressClick = useRef(false);
-  const instruments = displayInstruments(pattern);
   const step = gridTicks(grid);
   const steps = gridSteps(grid);
   const barStart = bar * BAR_TICKS;
@@ -172,40 +223,42 @@ export function DrumGrid({
           setMoving(null);
         }}
       >
-        Изменить / перенести удар
+        {t.edit}
       </button>
-      {editing && <p role="status">Выберите клетку для изменения или переноса удара.</p>}
+      {editing && <p role="status">{t.selectCell}</p>}
       {moving && (
         <div className="inline-notice">
-          Выберите новое место на дорожке «{INSTRUMENT_DETAILS[moving.instrument].name}».{' '}
+          {t.selectDestination(
+            instrumentName(language, moving.instrument, INSTRUMENT_DETAILS[moving.instrument].name),
+          )}{' '}
           <button
             onClick={() => {
               setMoving(null);
               originCell.current?.focus();
             }}
           >
-            Отмена
+            {t.cancel}
           </button>
         </div>
       )}
-      <div className="sequencer" role="group" aria-label="Барабанная сетка">
+      <div className="sequencer" role="group" aria-label={t.grid}>
         <div className="track-labels">
-          <div className="ruler-label">ДОЛИ</div>
-          {instruments.map((instrument) => (
+          <div className="ruler-label">{t.beats}</div>
+          {tracks.map(({ instrument, name }) => (
             <div className={`track-label ${instrument}`} key={instrument}>
               <Icon name={INSTRUMENT_DETAILS[instrument].icon} size={25} />
               <div>
                 <strong
-                  aria-label={INSTRUMENT_DETAILS[instrument].name}
+                  aria-label={name}
                   data-short={
                     instrument.startsWith('tom')
-                      ? 'Т' + instrument.slice(3)
-                      : INSTRUMENT_DETAILS[instrument].name
+                      ? (language === 'ru' ? 'Т' : 'T') + instrument.slice(3)
+                      : name
                   }
                 >
-                  {INSTRUMENT_DETAILS[instrument].name}
+                  {name}
                 </strong>
-                <span>{INSTRUMENT_DETAILS[instrument].label}</span>
+                {language === 'ru' && <span>{INSTRUMENT_DETAILS[instrument].label}</span>}
               </div>
             </div>
           ))}
@@ -223,11 +276,9 @@ export function DrumGrid({
                 </span>
               ))}
             </div>
-            {instruments.map((instrument) => (
+            {tracks.map(({ instrument, name }) => (
               <div className="track-block" key={instrument}>
-                <div className={`mobile-track-name ${instrument}`}>
-                  {INSTRUMENT_DETAILS[instrument].name}
-                </div>
+                <div className={`mobile-track-name ${instrument}`}>{name}</div>
                 <div
                   className={`track-row ${instrument}`}
                   style={{ gridTemplateColumns: `repeat(${steps}, 1fr)` }}
@@ -247,7 +298,7 @@ export function DrumGrid({
                         data-instrument={instrument}
                         data-tick={tick}
                         className={`step ${fillRange && tick >= fillRange.start && tick < fillRange.end && fillRange.tracks.includes(instrument) ? 'fill-selected' : ''} ${hit ? 'occupied' : ''} ${strength ?? ''} ${active ? 'playing' : ''} ${i % (steps / 4) === 0 ? 'downbeat' : ''}`}
-                        aria-label={`${INSTRUMENT_DETAILS[instrument].name}, такт ${bar + 1}, шаг ${i + 1}${hit ? `, ${strengthNames[strength!]}` : ', пусто'}${hiddenHits ? ', есть удары между делениями' : ''}`}
+                        aria-label={`${name}, ${t.bar} ${bar + 1}, ${t.step} ${i + 1}, ${strength ? t.strengthNames[strength] : t.empty}${hiddenHits ? `, ${t.offGrid}` : ''}`}
                         aria-pressed={!!hit}
                         onPointerDown={(e) => pointerDown(e, instrument, tick, !!hit)}
                         onPointerMove={pointerMove}
@@ -273,7 +324,7 @@ export function DrumGrid({
                           <span className="empty-dot" />
                         )}
                         {hiddenHits > 0 && (
-                          <span className="hidden-hits" title="Удары между делениями">
+                          <span className="hidden-hits" title={t.offGridTitle}>
                             {hiddenHits}
                           </span>
                         )}
@@ -289,7 +340,7 @@ export function DrumGrid({
       {selection && (
         <dialog
           ref={dialog}
-          aria-label="Сила удара"
+          aria-label={t.strength}
           className="sheet-backdrop"
           onCancel={(e) => {
             e.preventDefault();
@@ -314,13 +365,19 @@ export function DrumGrid({
           <section className="strength-sheet">
             <div className="sheet-heading">
               <div>
-                <span className="eyebrow">СИЛА УДАРА</span>
-                <h3>{INSTRUMENT_DETAILS[selection.instrument].name}</h3>
+                <span className="eyebrow">{t.strengthHeading}</span>
+                <h3>
+                  {instrumentName(
+                    language,
+                    selection.instrument,
+                    INSTRUMENT_DETAILS[selection.instrument].name,
+                  )}
+                </h3>
               </div>
               <button
                 ref={closeButton}
                 className="icon-button"
-                aria-label="Закрыть"
+                aria-label={t.close}
                 onClick={closeSelection}
               >
                 <Icon name="close" />
@@ -330,7 +387,7 @@ export function DrumGrid({
               {(['ghost', 'normal', 'accent'] as const).map((strength) => (
                 <button
                   key={strength}
-                  aria-label={`${strengthNames[strength]}, сила ${VELOCITIES[strength]}`}
+                  aria-label={`${t.strengthNames[strength]}, ${t.velocity} ${VELOCITIES[strength]}`}
                   data-strength={strength}
                   className={`strength-choice ${strength} ${currentHit && strengthOf(currentHit.velocity) === strength ? 'chosen' : ''}`}
                   onClick={() => {
@@ -339,7 +396,7 @@ export function DrumGrid({
                   }}
                 >
                   <span className="hit-dot">{strength === 'accent' ? '›' : ''}</span>
-                  <strong>{strengthNames[strength]}</strong>
+                  <strong>{t.strengthNames[strength]}</strong>
                   <small>{VELOCITIES[strength]}</small>
                 </button>
               ))}
@@ -353,7 +410,7 @@ export function DrumGrid({
                     closeSelection();
                   }}
                 >
-                  Перенести удар
+                  {t.move}
                 </button>
                 <button
                   className="text-button danger"
@@ -362,14 +419,11 @@ export function DrumGrid({
                     closeSelection();
                   }}
                 >
-                  Удалить
+                  {t.remove}
                 </button>
               </div>
             )}
-            <p className="muted small">
-              Выберите клетку для редактирования. Для переноса нажмите «Перенести удар», затем новое
-              место.
-            </p>
+            <p className="muted small">{t.editHelp}</p>
           </section>
         </dialog>
       )}

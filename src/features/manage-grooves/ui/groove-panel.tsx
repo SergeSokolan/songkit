@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { INSTRUMENT_DETAILS, type Pattern } from '../../../entities/drum-pattern';
+import { genreLabels, instrumentName, useLanguage } from '../../../shared/i18n';
 import { GROOVE_CATALOG, grooveCandidate } from '../model/grooves';
+import { grooveCopy, grooveLabels } from './copy';
 interface Props {
   pattern: Pattern;
   bar: number;
@@ -14,7 +16,6 @@ interface Props {
   activeId?: string;
   previewDetails?: ReactNode;
 }
-const genres = { rock: 'Рок', metal: 'Металл', pop: 'Поп', funk: 'Фанк', jazz: 'Джаз' };
 export function GroovePanel({
   pattern,
   bar,
@@ -24,12 +25,16 @@ export function GroovePanel({
   activeId,
   previewDetails,
 }: Props) {
+  const language = useLanguage();
+  const copy = grooveCopy[language];
+  const trackLabel = (track: keyof typeof INSTRUMENT_DETAILS) =>
+    instrumentName(language, track, INSTRUMENT_DETAILS[track].name);
   const [open, setOpen] = useState(false),
     [genre, setGenre] = useState('rock'),
     [all, setAll] = useState(false),
     [allow, setAllow] = useState(false);
   return (
-    <section className="fills-panel" aria-label="Базовые ритмы">
+    <section className="fills-panel" aria-label={copy.catalog}>
       <button
         className="secondary-button"
         aria-expanded={open}
@@ -38,22 +43,22 @@ export function GroovePanel({
           onCancel();
         }}
       >
-        Базовые ритмы
+        {copy.catalog}
       </button>
       {open && (
         <div className="fills-content">
-          <h2>Основа партии</h2>
+          <h2>{copy.title}</h2>
           <label>
-            Жанр ритма
+            {copy.genre}
             <select
-              aria-label="Жанр ритма"
+              aria-label={copy.genre}
               value={genre}
               onChange={(e) => {
                 onCancel();
                 setGenre(e.target.value);
               }}
             >
-              {Object.entries(genres).map(([id, name]) => (
+              {Object.entries(genreLabels[language]).map(([id, name]) => (
                 <option key={id} value={id}>
                   {name}
                 </option>
@@ -69,12 +74,9 @@ export function GroovePanel({
                 setAll(e.target.checked);
               }}
             />{' '}
-            Повторить во всех тактах
+            {copy.repeat}
           </label>
-          <p>
-            Заменяются дорожки карточки: {all ? 'все такты' : 'такт ' + (bar + 1)}. Темп
-            сохраняется.
-          </p>
+          <p>{copy.range(bar + 1, all)}</p>
           <label>
             <input
               type="checkbox"
@@ -84,7 +86,7 @@ export function GroovePanel({
                 setAllow(e.target.checked);
               }}
             />{' '}
-            Добавить недостающие инструменты
+            {copy.allowMissing}
           </label>
           <div className="fill-candidates">
             {GROOVE_CATALOG.filter((c) => c.style === genre).map((card) => {
@@ -95,16 +97,21 @@ export function GroovePanel({
                 card.id,
               );
               const missing = range.tracks.filter((t) => !pattern.instruments.includes(t));
+              const { name, description, feel, density } = grooveLabels(language, card);
               return (
                 <article className="pattern-card" key={card.id}>
-                  <h3>{card.name}</h3>
-                  <p>{card.description}</p>
+                  <h3>{name}</h3>
+                  <p>{description}</p>
                   <p>
-                    {card.feel} · {card.density}
+                    {feel} · {density}
                   </p>
-                  <p>Дорожки: {range.tracks.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}</p>
+                  <p>
+                    {copy.tracks} {range.tracks.map(trackLabel).join(', ')}
+                  </p>
                   {missing.length > 0 && (
-                    <p>Добавьте: {missing.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}</p>
+                    <p>
+                      {copy.missingTracks} {missing.map(trackLabel).join(', ')}
+                    </p>
                   )}
                   <button
                     className="secondary-button"
@@ -112,13 +119,13 @@ export function GroovePanel({
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allow)}
                   >
-                    {activeId === card.id ? 'Остановить' : 'Послушать'}: {card.name}
+                    {activeId === card.id ? copy.stop : copy.listen}: {name}
                   </button>
                   {activeId === card.id && (
                     <div className="preview-actions">
                       {previewDetails}
                       <button className="secondary-button" onClick={onApply}>
-                        Применить ритм
+                        {copy.apply}
                       </button>
                     </div>
                   )}
@@ -126,11 +133,7 @@ export function GroovePanel({
               );
             })}
           </div>
-          <p className="small">
-            Оригинальные учебные адаптации. Обратный свинг — согласованный вариант короткая/длинная,
-            не общепринятый стандарт джаза. Райд и остальные инструменты имеют отдельные позиции;
-            вся партия автоматически не свингуется.
-          </p>
+          <p className="small">{copy.attribution}</p>
         </div>
       )}
     </section>

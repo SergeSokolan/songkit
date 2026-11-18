@@ -5,8 +5,11 @@ import { DrumEditor } from '../pages/drum-editor';
 import { loadDraft } from '../features/draft-recovery';
 import type { Draft } from '../entities/drum-pattern';
 import { activateUpdate } from './activate-update';
+import { Preferences, PreferencesControls } from './preferences';
+import { useLanguage } from '../shared/i18n';
 import './styles/global.css';
 function App() {
+  const english = useLanguage() === 'en';
   const [boot, setBoot] = useState<{ draft: Draft | null; error: string } | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineError, setOfflineError] = useState('');
@@ -55,17 +58,20 @@ function App() {
     return (
       <div className="boot-screen">
         songkit<span>.</span>
-        <p>Открываем мастерскую…</p>
+        <p>{english ? 'Opening the workshop…' : 'Открываем мастерскую…'}</p>
       </div>
     );
   return (
     <>
       {offlineError && (
         <div role="alert" className="inline-notice warning">
-          {offlineError}
+          {english
+            ? 'Offline mode is unavailable. Check your connection and reload.'
+            : offlineError}
         </div>
       )}
       <DrumEditor
+        preferences={<PreferencesControls />}
         initial={boot.draft}
         recoveryError={boot.error}
         offlineReady={ready}
@@ -77,6 +83,8 @@ function App() {
 }
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <Preferences>
+      <App />
+    </Preferences>
   </StrictMode>,
 );
