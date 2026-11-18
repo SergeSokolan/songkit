@@ -6,6 +6,12 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
+## [0.8.0] — 2026-11-18
+
+### Добавлено
+
+- Кнопка «Ноты» открывает партитуру текущей партии по тактам с обозначениями динамики, пауз и триолей. Партитура доступна офлайн.
+
 ## [0.8.0-rc.1] — 2026-11-18
 
 ### Добавлено
@@ -199,7 +205,7 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.8.0...HEAD
 [0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
@@ -213,3 +219,4 @@
 [0.6.0]: https://github.com/SergeSokolan/songkit/compare/v0.5.2...v0.6.0
 [0.7.0]: https://github.com/SergeSokolan/songkit/compare/v0.6.0...v0.7.0
 [0.8.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.7.0...v0.8.0-rc.1
+[0.8.0]: https://github.com/SergeSokolan/songkit/compare/v0.7.0...v0.8.0
