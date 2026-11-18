@@ -659,7 +659,6 @@ input[type='range'] {
 }
 .grid-content {
   width: 100%;
-  padding-inline: 4px;
 }
 .beat-ruler {
   height: 33px;
@@ -738,7 +737,7 @@ input[type='range'] {
 }
 .step:focus-visible {
   z-index: 1;
-  outline-offset: 2px;
+  outline-offset: -5px;
 }
 .hit-dot {
   width: 17px;
