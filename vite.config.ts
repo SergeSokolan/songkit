@@ -39,6 +39,7 @@ const contentSecurityPolicy = [
   "worker-src 'self'",
   "manifest-src 'self'",
   "media-src 'self'",
+  "font-src 'self'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-src 'none'",
@@ -89,7 +90,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,wav,txt,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,wav,woff2,txt,webmanifest}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',

@@ -1,6 +1,6 @@
 {
   "name": "songkit",
-  "version": "0.7.0",
+  "version": "0.8.0-rc.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "vexflow": "5.2.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
