@@ -73,7 +73,7 @@ test('guide offers manual instructions and only shows install when the browser o
     );
   });
   await page.goto('./?view=guide');
-  const chooser = page.getByLabel('Браузер и устройство');
+  const chooser = page.getByRole('combobox', { name: 'Браузер и устройство' });
   const install = page.getByRole('button', { name: 'Установить', exact: true });
   await expect(install).toHaveCount(0);
   await chooser.selectOption('safariIos');
@@ -91,7 +91,7 @@ test('guide offers manual instructions and only shows install when the browser o
     window.dispatchEvent(event);
   });
   await install.click();
-  await expect(page.getByRole('status').getByText('SongKit уже установлен.')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('SongKit уже установлен.');
   await expect(install).toHaveCount(0);
   await expect(chooser).toBeEnabled();
 });
