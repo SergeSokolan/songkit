@@ -2,6 +2,34 @@ import { defineConfig } from 'vite';
 import packageJson from './package.json' with { type: 'json' };
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { welcomeCopy } from './src/pages/welcome/copy.ts';
+
+const welcome = Object.fromEntries(
+  Object.entries(welcomeCopy.ru).map(([key, text]) => [
+    key,
+    text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+  ]),
+);
+const staticWelcome = `
+  <div class="welcome-page entry-static">
+    <header class="welcome-header">
+      <span class="welcome-version">v${packageJson.version}</span>
+      <a class="github-link" href="https://github.com/SergeSokolan/songkit">GitHub</a>
+    </header>
+    <main class="welcome-hero">
+      <div>
+        <span class="welcome-brand">SongKit</span>
+        <h1>${welcome.title}</h1>
+        <p class="welcome-summary">${welcome.summary} ${welcome.library}</p>
+        <p>${welcome.files}</p>
+        <p>${welcome.localData} ${welcome.offline}</p>
+        <div class="welcome-actions">
+          <a class="welcome-primary" href="?view=editor">${welcome.openEditor}</a>
+          <a class="welcome-guide" href="?view=guide">${welcome.installationGuide}</a>
+        </div>
+      </div>
+    </main>
+  </div>`;
 const contentSecurityPolicy = [
   "default-src 'none'",
   "script-src 'self'",
@@ -36,6 +64,11 @@ export default defineConfig({
       },
     },
     react(),
+    {
+      name: 'songkit-static-welcome',
+      apply: 'build',
+      transformIndexHtml: (html) => html.replace('<!-- welcome-content -->', staticWelcome),
+    },
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,

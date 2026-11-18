@@ -155,6 +155,9 @@ a {
 button svg {
   vertical-align: middle;
 }
+.songkit-js .entry-static {
+  display: none;
+}
 .app-shell {
   max-width: 1216px;
   margin: auto;

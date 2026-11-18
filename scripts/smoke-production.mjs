@@ -5,7 +5,7 @@ if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
   throw new Error('Usage: node scripts/smoke-production.mjs X.Y.Z');
 }
 
-const production = 'https://sergesokolan.github.io/songkit/';
+const production = 'https://sergesokolan.github.io/songkit/?view=editor';
 const browser = await chromium.launch();
 try {
   const context = await browser.newContext({

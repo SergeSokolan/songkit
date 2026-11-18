@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('strength dialog keeps keyboard focus and returns it to the grid', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 664 });
-  await page.goto('./');
+  await page.goto('./?view=editor');
 
   const edit = page.getByRole('button', { name: 'Изменить / перенести удар' });
   const origin = page.getByRole('button', { name: /Малый, такт 1, шаг 4,/ });

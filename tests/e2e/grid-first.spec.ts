@@ -5,7 +5,7 @@ test.use({ hasTouch: true, viewport: { width: 390, height: 664 } });
 test('first screen exposes the editor and retains access to library and files', async ({
   page,
 }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   const firstCell = page.locator('.step').first();
   await expect(firstCell).toBeInViewport({ ratio: 1 });
   await expect(page.getByRole('button', { name: 'Играть у сетки' })).toBeInViewport({ ratio: 1 });

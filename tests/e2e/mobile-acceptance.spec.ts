@@ -6,7 +6,7 @@ test('mobile editor acceptance: tap, cancel a gesture, and restore the draft off
   context,
   page,
 }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   const cell = () => page.getByRole('button', { name: /Бочка, такт 1, шаг 2,/ });
 
   await test.step('Tap through three hit states', async () => {
@@ -70,7 +70,7 @@ test('large track labels stay above their cells in the compact grid', async ({ p
       body: `${await response.text()}\n.mobile-track-name { font-size: 24px !important; line-height: 1.3 !important; }`,
     });
   });
-  await page.goto('./');
+  await page.goto('./?view=editor');
   for (const instrument of ['tom3', 'tom1', 'tom2', 'ride', 'crash1', 'crash2'])
     await page.getByLabel('Добавить инструмент', { exact: true }).selectOption(instrument);
 

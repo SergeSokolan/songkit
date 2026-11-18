@@ -16,7 +16,7 @@ test('saved preferences reach the document before the editor module runs', async
     await editorCanLoad;
     await route.continue();
   });
-  await page.goto('./', { waitUntil: 'commit' });
+  await page.goto('./?view=editor', { waitUntil: 'commit' });
   try {
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-theme', 'linen');
@@ -39,7 +39,7 @@ test('theme and language changes preserve the pattern, exports and offline prefe
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 664 });
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
   const html = page.locator('html');
   await expect(html).toHaveAttribute('data-theme', 'olive');
@@ -93,7 +93,7 @@ test('preference controls fit narrow screens and work when local storage is bloc
       },
     });
   });
-  await page.goto('./');
+  await page.goto('./?view=editor');
   const html = page.locator('html');
   await expect(html).toHaveAttribute('data-theme', 'olive');
   await expect(html).toHaveAttribute('lang', 'ru');

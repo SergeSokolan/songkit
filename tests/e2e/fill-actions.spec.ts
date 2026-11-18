@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('only the active fill panel offers apply and cancel', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();
   await page
     .getByRole('button', { name: 'Дополнительно: генератор и произвольный участок' })
@@ -27,7 +27,7 @@ test('only the active fill panel offers apply and cancel', async ({ page }) => {
 test('the selected fill shows scope and offers playback and apply in its card', async ({
   page,
 }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await page.getByLabel('Количество тактов').selectOption('2');
   await page.getByRole('button', { name: 'Такт 2', exact: true }).click();
   await page.getByRole('button', { name: 'Брейки · библиотека и предложения' }).click();

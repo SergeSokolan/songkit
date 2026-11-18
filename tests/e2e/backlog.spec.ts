@@ -5,7 +5,7 @@ test('triplet input cycles, moves, undoes and restores mixed ticks offline', asy
   context,
 }) => {
   page.on('dialog', (d) => d.accept());
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await page.getByRole('button', { name: 'Новая партия', exact: true }).click();
   await page.getByRole('button', { name: '1/16T', exact: true }).click();
   await expect(page.locator('.track-row').first().locator('.step')).toHaveCount(24);
@@ -70,7 +70,7 @@ test('catalog preview and groove apply leave unrelated bars intact, offline', as
   page,
   context,
 }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await page.getByLabel('Количество тактов').selectOption('4');
   await page.getByRole('button', { name: 'Такт 3', exact: true }).click();
   await page.getByRole('button', { name: 'Базовые ритмы', exact: true }).click();
@@ -114,7 +114,7 @@ test('catalog preview and groove apply leave unrelated bars intact, offline', as
 for (const width of [360, 390, 430, 844, 1280])
   test('full kit layout and sticky transport at ' + width, async ({ page }, info) => {
     await page.setViewportSize({ width, height: width === 844 ? 390 : 844 });
-    await page.goto('./');
+    await page.goto('./?view=editor');
     for (const instrument of ['tom3', 'tom1', 'tom2', 'ride', 'crash1', 'crash2'])
       await page.getByLabel('Добавить инструмент', { exact: true }).selectOption(instrument);
     await page.locator('.track-row').last().scrollIntoViewIfNeeded();

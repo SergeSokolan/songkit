@@ -55,7 +55,7 @@ test('PWA updates after an explicit choice and preserves the draft', async ({ co
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('Missing HTTP port');
-    const url = 'http://127.0.0.1:' + address.port + '/songkit/';
+    const url = 'http://127.0.0.1:' + address.port + '/songkit/?view=editor';
     await page.goto(url);
     await expect(page.locator('.app-version')).toHaveText('v0.0.1');
     await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
