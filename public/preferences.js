@@ -1,4 +1,5 @@
 /* global document, localStorage */
+document.documentElement.classList.add('songkit-js');
 // This same-origin script runs before the styles paint and is precached with the app.
 try {
   const theme = localStorage.getItem('songkit.theme');

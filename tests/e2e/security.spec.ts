@@ -19,7 +19,7 @@ test('production CSP rejects injected scripts and connections to a second origin
     const address = outside.address();
     if (!address || typeof address === 'string') throw new Error('Missing test port');
     const origin = 'http://127.0.0.1:' + address.port;
-    await page.goto('./');
+    await page.goto('./?view=editor');
     await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
     const violations = await page.evaluate(async (url) => {
       const result = new Set<string>();
@@ -65,7 +65,7 @@ test('production CSP rejects injected scripts and connections to a second origin
 });
 
 test('an oversized or invalid project does not erase an existing hit', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await page.getByRole('button', { name: 'Бочка, такт 1, шаг 2, пусто', exact: true }).click();
   const file = page.locator('input[type=file]');
   for (const [content, message] of [

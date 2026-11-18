@@ -1,6 +1,13 @@
 import { GroovePanel } from '../../../features/manage-grooves';
 import { FillPanel, applyFill, type Fill, type FillRange } from '../../../features/manage-fills';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEventHandler,
+  type ReactNode,
+} from 'react';
 import {
   BAR_TICKS,
   PPQ,
@@ -62,6 +69,9 @@ function describePreviewRange({ start, end }: FillRange, language: Language) {
   return `${english ? 'Range' : 'Участок'}: ${boundary(start)} → ${endLabel}`;
 }
 interface Props {
+  visible: boolean;
+  guideHref: string;
+  onGuide: MouseEventHandler<HTMLAnchorElement>;
   preferences?: ReactNode;
   initial: Draft | null;
   recoveryError: string;
@@ -70,6 +80,9 @@ interface Props {
   onUpdate: () => Promise<void>;
 }
 export function DrumEditor({
+  visible,
+  guideHref,
+  onGuide,
   preferences,
   initial,
   recoveryError,
@@ -149,6 +162,13 @@ export function DrumEditor({
         }
       : undefined,
   );
+  const stopPlayback = playback.stop;
+  useEffect(() => {
+    if (!visible) {
+      stopPlayback();
+      setFillPreview(null);
+    }
+  }, [stopPlayback, visible]);
   const cancelPreview = () => {
     if (activePreview) playback.stop();
     setFillPreview(null);
@@ -757,6 +777,9 @@ export function DrumEditor({
       </main>
       <footer className="site-footer">
         <span>SONGKIT / DRUM WORKSHOP</span>
+        <a className="text-button" href={guideHref} onClick={onGuide}>
+          {t('Инструкция по установке', 'Installation guide')}
+        </a>
       </footer>
     </div>
   );

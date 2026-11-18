@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('hit counter uses Russian plural forms', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?view=editor');
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Новая партия', exact: true }).click();
   await page.getByRole('button', { name: '1/32', exact: true }).click();

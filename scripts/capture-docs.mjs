@@ -49,7 +49,7 @@ try {
       deviceScaleFactor: 1,
     });
     const page = await context.newPage();
-    await page.goto(`http://127.0.0.1:${port}/songkit/`);
+    await page.goto(`http://127.0.0.1:${port}/songkit/?view=editor`);
     await page
       .locator('.app-version')
       .filter({ hasText: 'v' + version })

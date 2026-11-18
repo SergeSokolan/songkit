@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
         },
       });
   });
-  await page.goto('./');
+  await page.goto('./?view=editor');
   await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'В начало', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Играть', exact: true })).toHaveText('');

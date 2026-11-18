@@ -8,7 +8,7 @@ for (const { name, grid, count } of [
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 664 });
-    await page.goto('./');
+    await page.goto('./?view=editor');
 
     const editorGrid = page.getByRole('button', { name: '1/8', exact: true });
     await editorGrid.click();

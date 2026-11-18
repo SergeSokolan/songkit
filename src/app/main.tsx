@@ -1,15 +1,31 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useEffect, useRef, useState, type MouseEventHandler } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { DrumEditor } from '../pages/drum-editor';
+import { WelcomePage } from '../pages/welcome';
+import { InstallationGuide } from '../pages/installation-guide';
 import { loadDraft } from '../features/draft-recovery';
 import type { Draft } from '../entities/drum-pattern';
 import { activateUpdate } from './activate-update';
 import { Preferences, PreferencesControls } from './preferences';
 import { useLanguage } from '../shared/i18n';
+import {
+  alreadyOpenedEditor,
+  entryHref,
+  readEntryView,
+  rememberEditorVisit,
+  type EntryView,
+} from './entry-view';
+import { useInstallation } from './use-installation';
 import './styles/global.css';
 function App() {
   const english = useLanguage() === 'en';
+  const { installed, install } = useInstallation();
+  const [initialEditor] = useState(() => alreadyOpenedEditor() || installed);
+  const [explicitView, setExplicitView] = useState(readEntryView);
+  const [keepEditor, setKeepEditor] = useState(false);
+  const focusHeading = useRef(false);
+  const visiblePage = useRef<HTMLDivElement>(null);
   const [boot, setBoot] = useState<{ draft: Draft | null; error: string } | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineError, setOfflineError] = useState('');
@@ -54,13 +70,52 @@ function App() {
       active = false;
     };
   }, []);
-  if (!boot)
-    return (
-      <div className="boot-screen">
-        songkit<span>.</span>
-        <p>{english ? 'Opening the workshop…' : 'Открываем мастерскую…'}</p>
-      </div>
-    );
+  const view =
+    explicitView ?? (boot && (initialEditor || boot.draft || boot.error ? 'editor' : 'welcome'));
+  const readyView = view === 'editor' && !boot ? null : view;
+  useEffect(() => {
+    const pop = () => {
+      focusHeading.current = true;
+      setExplicitView(readEntryView());
+    };
+    window.addEventListener('popstate', pop);
+    return () => window.removeEventListener('popstate', pop);
+  }, []);
+  useEffect(() => {
+    if (readyView === 'editor') {
+      setKeepEditor(true);
+      rememberEditorVisit();
+    }
+    if (readyView && focusHeading.current) {
+      focusHeading.current = false;
+      const heading = visiblePage.current?.querySelector('h1');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+      window.scrollTo(0, 0);
+    }
+  }, [readyView]);
+
+  const navigate =
+    (next: EntryView): MouseEventHandler<HTMLAnchorElement> =>
+    (event) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      event.preventDefault();
+      if (readyView === next) return;
+      history.pushState(null, '', entryHref(next));
+      focusHeading.current = true;
+      setExplicitView(next);
+    };
+
   return (
     <>
       {offlineError && (
@@ -70,14 +125,49 @@ function App() {
             : offlineError}
         </div>
       )}
-      <DrumEditor
-        preferences={<PreferencesControls />}
-        initial={boot.draft}
-        recoveryError={boot.error}
-        offlineReady={ready}
-        updateAvailable={updateAvailable}
-        onUpdate={activateUpdate}
-      />
+      {boot && (keepEditor || readyView === 'editor') && (
+        <div hidden={readyView !== 'editor'} ref={readyView === 'editor' ? visiblePage : undefined}>
+          <DrumEditor
+            visible={readyView === 'editor'}
+            guideHref={entryHref('guide')}
+            onGuide={navigate('guide')}
+            preferences={<PreferencesControls />}
+            initial={boot.draft}
+            recoveryError={boot.error}
+            offlineReady={ready}
+            updateAvailable={updateAvailable}
+            onUpdate={activateUpdate}
+          />
+        </div>
+      )}
+      {readyView === 'welcome' && (
+        <div ref={visiblePage}>
+          <WelcomePage
+            editorHref={entryHref('editor')}
+            guideHref={entryHref('guide')}
+            onEditor={navigate('editor')}
+            onGuide={navigate('guide')}
+          />
+        </div>
+      )}
+      {readyView === 'guide' && (
+        <div ref={visiblePage}>
+          <InstallationGuide
+            editorHref={entryHref('editor')}
+            welcomeHref={entryHref('welcome')}
+            onEditor={navigate('editor')}
+            onWelcome={navigate('welcome')}
+            install={install}
+            installed={installed}
+          />
+        </div>
+      )}
+      {!readyView && (
+        <div className="boot-screen">
+          songkit<span>.</span>
+          <p>{english ? 'Opening the workshop…' : 'Открываем мастерскую…'}</p>
+        </div>
+      )}
     </>
   );
 }

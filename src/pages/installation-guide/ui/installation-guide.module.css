@@ -1,0 +1,132 @@
+.guide {
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-block: max(clamp(2rem, 6vw, 4.5rem), env(safe-area-inset-top))
+    max(clamp(2rem, 6vw, 4.5rem), env(safe-area-inset-bottom));
+  padding-inline: max(clamp(1rem, 4vw, 2rem), env(safe-area-inset-left))
+    max(clamp(1rem, 4vw, 2rem), env(safe-area-inset-right));
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.guide h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.3rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.introduction {
+  margin: 0.8rem 0 1.5rem;
+  max-width: 55ch;
+  font-size: 1.12rem;
+  color: var(--muted);
+}
+
+.installActions:not(:empty) {
+  margin-bottom: 1rem;
+}
+
+.installActions p {
+  margin: 0;
+  color: var(--selected-mark);
+}
+
+.primary,
+.editor {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.55rem;
+  font-weight: 650;
+}
+
+.primary {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.primary:hover {
+  background: var(--action-hover);
+}
+
+.panel {
+  border: 1px solid var(--separator);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.chooser {
+  display: grid;
+  gap: 0.45rem;
+  font-weight: 650;
+}
+
+.chooser select {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--control-border);
+  border-radius: 0.5rem;
+  background: var(--control-bg);
+  color: var(--text);
+  font-weight: 400;
+}
+
+.steps {
+  margin: 1.25rem 0 0;
+  padding-inline-start: 1.45rem;
+}
+
+.steps li {
+  padding-inline-start: 0.25rem;
+}
+
+.steps li + li {
+  margin-top: 0.5rem;
+}
+
+.steps li::marker {
+  color: var(--action);
+  font-weight: 650;
+}
+
+.note,
+.sources {
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+.sources,
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1rem;
+}
+
+.sources a,
+.navigation a:not(.editor) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.navigation {
+  margin-top: 1.25rem;
+}
+
+.editor {
+  background: var(--control-bg);
+}
+
+.editor:hover {
+  background: var(--selected-bg);
+}
