@@ -36,7 +36,30 @@ test('drum score draws stacked, straight and triplet hits and is available on fi
     buffer: Buffer.from(JSON.stringify(project)),
   });
   await expect(page.getByText('Проект открыт.', { exact: true })).toBeVisible();
-  await expect(page.getByText('Черновик на устройстве', { exact: true })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<number | undefined>((resolve, reject) => {
+            const open = indexedDB.open('songkit');
+            open.onerror = () => reject(open.error);
+            open.onsuccess = () => {
+              const database = open.result;
+              const transaction = database.transaction('drafts');
+              const request = transaction.objectStore('drafts').get('current');
+              transaction.oncomplete = () => {
+                database.close();
+                resolve(request.result?.pattern?.barCount);
+              };
+              transaction.onerror = () => {
+                database.close();
+                reject(transaction.error);
+              };
+            };
+          }),
+      ),
+    )
+    .toBe(4);
   await context.setOffline(true);
   await page.reload();
   const open = page.getByRole('button', { name: 'Ноты', exact: true });

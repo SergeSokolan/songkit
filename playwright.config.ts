@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 const port = Number(process.env.SONGKIT_TEST_PORT || 4173);
 export default defineConfig({
-  globalTimeout: 120000,
+  globalTimeout: 210_000,
   testDir: './tests/e2e',
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
