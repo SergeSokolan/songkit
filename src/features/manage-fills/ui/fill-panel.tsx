@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { INSTRUMENT_DETAILS, type Pattern } from '../../../entities/drum-pattern';
-import { catalogFill, FILL_CATALOG, GENRES } from '../model/catalog';
+import { genreLabels, instrumentName, useLanguage } from '../../../shared/i18n';
+import { catalogFill, FILL_CATALOG } from '../model/catalog';
 import type { Fill, FillRange } from '../model/fills';
 import { AdvancedFillPanel } from './advanced-fill-panel';
+import { fillCopy, fillLabels } from './copy';
 interface Props {
   pattern: Pattern;
   bar: number;
@@ -16,12 +18,16 @@ interface Props {
 export function FillPanel(props: Props) {
   const { pattern, bar, onPreview, onApply, onCancel, previewing, activeId, previewDetails } =
     props;
+  const language = useLanguage();
+  const copy = fillCopy[language];
+  const trackLabel = (track: keyof typeof INSTRUMENT_DETAILS) =>
+    instrumentName(language, track, INSTRUMENT_DETAILS[track].name);
   const [open, setOpen] = useState(false);
   const [genre, setGenre] = useState('rock');
   const [beats, setBeats] = useState(2);
   const [allowMissing, setAllowMissing] = useState(false);
   return (
-    <section className="fills-panel" aria-label="Каталог брейков">
+    <section className="fills-panel" aria-label={copy.catalog}>
       <button
         className="secondary-button"
         aria-expanded={open}
@@ -30,27 +36,24 @@ export function FillPanel(props: Props) {
           onCancel();
         }}
       >
-        Брейки · библиотека и предложения
+        {copy.openCatalog}
       </button>
       {open && (
         <div className="fills-content">
-          <h2>Брейк · такт {bar + 1}</h2>
-          <p>
-            Последние {beats} {beats === 1 ? 'доля' : 'доли'} выбранного такта. Каждая карточка —
-            законченная фраза в 4/4.
-          </p>
+          <h2>{copy.title(bar + 1)}</h2>
+          <p>{copy.intro(beats)}</p>
           <div className="fill-options">
             <label>
-              Жанр брейка
+              {copy.genre}
               <select
-                aria-label="Жанр брейка"
+                aria-label={copy.genre}
                 value={genre}
                 onChange={(e) => {
                   onCancel();
                   setGenre(e.target.value);
                 }}
               >
-                {Object.entries(GENRES).map(([id, name]) => (
+                {Object.entries(genreLabels[language]).map(([id, name]) => (
                   <option key={id} value={id}>
                     {name}
                   </option>
@@ -58,9 +61,9 @@ export function FillPanel(props: Props) {
               </select>
             </label>
             <label>
-              Длительность брейка
+              {copy.length}
               <select
-                aria-label="Длительность брейка"
+                aria-label={copy.length}
                 value={beats}
                 onChange={(e) => {
                   onCancel();
@@ -69,7 +72,7 @@ export function FillPanel(props: Props) {
               >
                 {[1, 2, 4].map((n) => (
                   <option key={n} value={n}>
-                    {n === 1 ? '¼' : n === 2 ? '½' : '1'} такт
+                    {n === 1 ? '¼' : n === 2 ? '½' : '1'} {copy.barUnit}
                   </option>
                 ))}
               </select>
@@ -84,22 +87,24 @@ export function FillPanel(props: Props) {
                 setAllowMissing(e.target.checked);
               }}
             />{' '}
-            Добавить недостающие дорожки при применении
+            {copy.allowMissing}
           </label>
           <div className="fill-candidates">
             {FILL_CATALOG.filter((c) => c.style === genre && c.beats === beats).map((card) => {
               const { fill, range } = catalogFill(pattern, bar, card.id);
               const missing = range.tracks.filter((t) => !pattern.instruments.includes(t));
+              const { name, density } = fillLabels(language, card);
+              const scheme = language === 'en' ? card.scheme.replaceAll('Т', 'T') : card.scheme;
               return (
                 <article className="pattern-card" key={card.id}>
-                  <h3>{card.name}</h3>
+                  <h3>{name}</h3>
                   <p>
-                    {card.scheme} · {card.density}
+                    {scheme} · {density}
                   </p>
-                  <p>{range.tracks.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}</p>
+                  <p>{range.tracks.map(trackLabel).join(', ')}</p>
                   {missing.length > 0 && (
                     <p>
-                      Нужны дорожки: {missing.map((t) => INSTRUMENT_DETAILS[t].name).join(', ')}
+                      {copy.missingTracks} {missing.map(trackLabel).join(', ')}
                     </p>
                   )}
                   <button
@@ -108,13 +113,13 @@ export function FillPanel(props: Props) {
                     aria-pressed={activeId === card.id}
                     onClick={() => onPreview(fill, range, allowMissing)}
                   >
-                    {activeId === card.id ? 'Остановить' : 'Послушать'}: {card.name}
+                    {activeId === card.id ? copy.stop : copy.listen}: {name}
                   </button>
                   {previewing && activeId === card.id && (
                     <div className="preview-actions">
                       {previewDetails}
                       <button className="secondary-button" onClick={onApply}>
-                        Применить брейк
+                        {copy.apply}
                       </button>
                     </div>
                   )}
@@ -122,10 +127,7 @@ export function FillPanel(props: Props) {
               );
             })}
           </div>
-          <p className="small">
-            Учебные адаптации SongKit, CC0. S — малый, H — хэт, K — бочка, R/L — руки; скобки —
-            тихий удар.
-          </p>
+          <p className="small">{copy.notation}</p>
           <AdvancedFillPanel {...props} />
         </div>
       )}

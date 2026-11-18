@@ -6,6 +6,15 @@
 
 Следующие изменения попадут сюда после публикации текущего релиза. Опубликованные разделы и теги не переписываются.
 
+## [0.6.0] — 2026-11-18
+
+### Добавлено
+
+- Три темы в шапке редактора: «Оливковая», «Сумерки» и «Лён». Выбранная палитра применяется при открытии приложения.
+- Русский и английский интерфейс редактора, библиотеки ритмов и брейков, подсказок и сообщений. Тема и язык сохраняются на устройстве и доступны офлайн.
+
+Форматы проекта и черновика сохранены. Переключение темы и языка сохраняет партию и историю отмены.
+
 ## [0.5.2] — 2026-11-18
 
 ### Безопасность
@@ -174,7 +183,7 @@
 
 Версии до 0.3.0 не размечены задним числом: отдельные отчёты сохранены как история, без выдуманных релизов.
 
-[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/SergeSokolan/songkit/compare/v0.6.0...HEAD
 [0.4.1]: https://github.com/SergeSokolan/songkit/compare/v0.4.0...v0.4.1
 [0.4.0-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.3.0...v0.4.0-rc.1
 [0.3.0]: https://github.com/SergeSokolan/songkit/releases/tag/v0.3.0
@@ -185,3 +194,4 @@
 [0.5.1]: https://github.com/SergeSokolan/songkit/compare/v0.5.0...v0.5.1
 [0.5.2-rc.1]: https://github.com/SergeSokolan/songkit/compare/v0.5.1...v0.5.2-rc.1
 [0.5.2]: https://github.com/SergeSokolan/songkit/compare/v0.5.1...v0.5.2
+[0.6.0]: https://github.com/SergeSokolan/songkit/compare/v0.5.2...v0.6.0

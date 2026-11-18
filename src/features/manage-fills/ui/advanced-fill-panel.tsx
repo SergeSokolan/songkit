@@ -7,7 +7,9 @@ import {
   type Pattern,
   type Instrument,
 } from '../../../entities/drum-pattern';
+import { genreLabels, instrumentName, useLanguage } from '../../../shared/i18n';
 import { FILL_LIBRARY, libraryFill, suggestFills, type Fill, type FillRange } from '../model/fills';
+import { fillCopy, fillLabels } from './copy';
 interface Props {
   pattern: Pattern;
   onPreview: (fill: Fill, range: FillRange, allowMissing: boolean) => void;
@@ -17,11 +19,7 @@ interface Props {
   activeId?: string;
   previewDetails?: ReactNode;
 }
-function boundaryLabel(beat: number) {
-  const whole = Math.floor(beat);
-  const sub = Math.round((beat - whole) * 8);
-  return `Такт ${Math.floor(whole / 4) + 1}, доля ${(whole % 4) + 1}${sub ? ` + ${sub}/8 доли` : ''}`;
-}
+const styles = ['rock', 'pop', 'funk'] as const;
 export function AdvancedFillPanel({
   pattern,
   onPreview,
@@ -31,11 +29,24 @@ export function AdvancedFillPanel({
   activeId,
   previewDetails,
 }: Props) {
+  const language = useLanguage();
+  const copy = fillCopy[language];
+  const styleLabel = (s: (typeof styles)[number]) =>
+    language === 'ru' ? s : genreLabels[language][s];
+  const boundaryLabel = (beat: number) => {
+    const whole = Math.floor(beat);
+    const sub = Math.round((beat - whole) * 8);
+    return copy.boundary(Math.floor(whole / 4) + 1, (whole % 4) + 1, sub);
+  };
+  const candidateLabel = (candidate: Pick<Fill, 'name' | 'density'>) => {
+    const { name, density } = fillLabels(language, candidate);
+    return `${name} · ${density}`;
+  };
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(Math.max(0, totalTicks(pattern) / PPQ - 2));
   const [end, setEnd] = useState(totalTicks(pattern) / PPQ);
   const [tracks, setTracks] = useState<Instrument[]>(['snare', 'hat']);
-  const [style, setStyle] = useState('rock');
+  const [style, setStyle] = useState<(typeof styles)[number]>('rock');
   const [seed, setSeed] = useState(1);
   const [allowMissing, setAllowMissing] = useState(false);
   const range = useMemo(
@@ -49,7 +60,7 @@ export function AdvancedFillPanel({
   );
   const invalidate = () => onCancel();
   return (
-    <section className="fills-panel" aria-label="Брейки">
+    <section className="fills-panel" aria-label={copy.advanced}>
       <button
         className="secondary-button"
         aria-expanded={open}
@@ -58,22 +69,24 @@ export function AdvancedFillPanel({
           onCancel();
         }}
       >
-        Дополнительно: генератор и произвольный участок
+        {copy.openAdvanced}
       </button>
       {open && (
         <div className="fills-content">
-          <h2>Брейк внутри фразы</h2>
-          <p>Заменяются только выбранные дорожки внутри участка. Остальная партия сохраняется.</p>
+          <h2>{copy.advancedTitle}</h2>
+          <p>{copy.advancedIntro}</p>
           <p className="small">
-            Участок: {boundaryLabel(start)} →{' '}
-            {end === totalTicks(pattern) / PPQ ? 'конец фразы' : boundaryLabel(end)}. Длина:{' '}
-            {Math.max(0, end - start)} доли. Для всех мелких ударов выберите сетку 1/32.
+            {copy.range(
+              boundaryLabel(start),
+              end === totalTicks(pattern) / PPQ ? copy.endOfPhrase : boundaryLabel(end),
+              Math.max(0, end - start),
+            )}
           </p>
           <div className="fill-options">
             <label>
-              От доли
+              {copy.start}
               <select
-                aria-label="Начало брейка"
+                aria-label={copy.startLabel}
                 value={start}
                 onChange={(e) => {
                   invalidate();
@@ -88,9 +101,9 @@ export function AdvancedFillPanel({
               </select>
             </label>
             <label>
-              До границы
+              {copy.end}
               <select
-                aria-label="Конец брейка"
+                aria-label={copy.endLabel}
                 value={end}
                 onChange={(e) => {
                   invalidate();
@@ -100,29 +113,31 @@ export function AdvancedFillPanel({
                 {Array.from({ length: totalTicks(pattern) / 120 }, (_, i) => (
                   <option key={i + 1} value={(i + 1) / 8}>
                     {(i + 1) / 8 === totalTicks(pattern) / PPQ
-                      ? 'Конец фразы'
+                      ? copy.endOption
                       : boundaryLabel((i + 1) / 8)}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              Стиль
+              {copy.style}
               <select
                 value={style}
                 onChange={(e) => {
                   invalidate();
-                  setStyle(e.target.value);
+                  setStyle(styles[e.target.selectedIndex]);
                 }}
               >
-                {['rock', 'pop', 'funk'].map((s) => (
-                  <option key={s}>{s}</option>
+                {styles.map((s) => (
+                  <option key={s} value={s}>
+                    {styleLabel(s)}
+                  </option>
                 ))}
               </select>
             </label>
           </div>
           <fieldset>
-            <legend>Дорожки замены</legend>
+            <legend>{copy.tracks}</legend>
             <div className="fill-tracks">
               {INSTRUMENTS.map((t) => (
                 <label key={t}>
@@ -136,8 +151,8 @@ export function AdvancedFillPanel({
                       );
                     }}
                   />
-                  {INSTRUMENT_DETAILS[t].name}
-                  {!pattern.instruments.includes(t) ? ' (добавить)' : ''}
+                  {instrumentName(language, t, INSTRUMENT_DETAILS[t].name)}
+                  {!pattern.instruments.includes(t) ? copy.add : ''}
                 </label>
               ))}
             </div>
@@ -151,10 +166,10 @@ export function AdvancedFillPanel({
                 setAllowMissing(e.target.checked);
               }}
             />{' '}
-            Разрешаю добавить недостающие выбранные инструменты при применении
+            {copy.allowSelected}
           </label>
-          {!valid && <p role="alert">Выберите конец после начала и хотя бы одну дорожку.</p>}
-          <h3>Под мой бит</h3>
+          {!valid && <p role="alert">{copy.invalidRange}</p>}
+          <h3>{copy.generated}</h3>
           <div className="fill-candidates">
             {generated.map((f) => (
               <button
@@ -163,7 +178,7 @@ export function AdvancedFillPanel({
                 aria-pressed={activeId === f.id}
                 onClick={() => onPreview(f, range, false)}
               >
-                {activeId === f.id ? 'Остановить' : 'Послушать'}: {f.name} · {f.density}
+                {activeId === f.id ? copy.stop : copy.listen}: {candidateLabel(f)}
               </button>
             ))}
             <button
@@ -174,13 +189,13 @@ export function AdvancedFillPanel({
                 setSeed(seed + 1);
               }}
             >
-              Другие варианты
+              {copy.regenerate}
             </button>
           </div>
-          {valid && generated.length < 3 && (
-            <p>Для этого участка и дорожек доступно меньше трёх различных вариантов.</p>
-          )}
-          <h3>Библиотека · {style}</h3>
+          {valid && generated.length < 3 && <p>{copy.fewerVariants}</p>}
+          <h3>
+            {copy.library} · {styleLabel(style)}
+          </h3>
           <div className="fill-candidates">
             {FILL_LIBRARY.filter((f) => f.style === style).map((t) => {
               const fill = valid ? libraryFill(pattern, range, t.id) : null;
@@ -193,15 +208,12 @@ export function AdvancedFillPanel({
                   disabled={!fill?.events.length || (!!missing && !allowMissing)}
                   onClick={() => fill && onPreview(fill, range, allowMissing)}
                 >
-                  {activeId === t.id ? 'Остановить' : 'Послушать'}: {t.name} · {t.density}
+                  {activeId === t.id ? copy.stop : copy.listen}: {candidateLabel(t)}
                 </button>
               );
             })}
           </div>
-          <p className="small">
-            Оригинальные шаблоны SongKit, CC0. Длительность подстраивается к участку без изменения
-            размера.
-          </p>
+          <p className="small">{copy.attribution}</p>
           {previewing &&
             activeId &&
             (generated.some((fill) => fill.id === activeId) ||
@@ -209,7 +221,7 @@ export function AdvancedFillPanel({
               <div className="preview-actions">
                 {previewDetails}
                 <button className="secondary-button" onClick={onApply}>
-                  Применить брейк
+                  {copy.apply}
                 </button>
               </div>
             )}
