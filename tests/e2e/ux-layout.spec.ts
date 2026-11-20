@@ -5,6 +5,10 @@ for (const width of [320, 390, 1280]) {
     test(`instrument picker label fits at ${width}px and ${scale}x text`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto('./?view=editor');
+      await expect(page.getByText('Доступно офлайн', { exact: true })).toBeVisible();
+      // Install/activate the initial worker before applying this page-only font override.
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Барабанный редактор' })).toBeVisible();
       await page.locator('html').evaluate((el, size) => {
         el.style.fontSize = `${size * 100}%`;
       }, scale);

@@ -1369,13 +1369,14 @@ input[type='range'] {
   display: flex;
   flex-wrap: wrap;
   min-width: 0;
+  font-size: max(16px, 1rem);
   align-items: center;
   gap: 5px;
   color: var(--muted);
 }
 .instrument-picker select {
   min-height: 44px;
-  font-size: max(16px, 1rem);
+  font-size: inherit;
   width: max-content;
   max-width: 100%;
 }
