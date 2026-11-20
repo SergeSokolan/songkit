@@ -342,6 +342,7 @@ export function DrumGrid({
           ref={dialog}
           aria-label={t.strength}
           className="sheet-backdrop"
+          onClose={() => setSelection(null)}
           onCancel={(e) => {
             e.preventDefault();
             closeSelection();

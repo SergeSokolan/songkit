@@ -207,6 +207,7 @@ export function TempoControl({ tempo, onTempo }: Props) {
         ref={dialog}
         className="tempo-dialog"
         aria-labelledby="tempo-title"
+        onClose={() => setOpen(false)}
         onCancel={() => setOpen(false)}
         onClick={(e) => {
           if (e.target === e.currentTarget) setOpen(false);
