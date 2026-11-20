@@ -16,9 +16,9 @@ for (const width of [320, 390, 1280]) {
         await caption.evaluate((element) => element.getBoundingClientRect().right),
       ).toBeLessThanOrEqual(width);
       if (width < 760) {
-        expect(
-          await picker.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
-        ).toBeGreaterThanOrEqual(16 * scale);
+        await expect
+          .poll(() => picker.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)))
+          .toBeGreaterThanOrEqual(16 * scale);
       }
       const metrics = await picker.evaluate((el: HTMLSelectElement) => {
         const style = getComputedStyle(el);
