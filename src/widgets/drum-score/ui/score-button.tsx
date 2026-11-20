@@ -29,7 +29,8 @@ export function ScoreButton({ pattern, bar }: { pattern: Pattern; bar: number })
         aria-label={english ? 'Drum score' : 'Барабанная партитура'}
         onClose={() => {
           setOpen(false);
-          trigger.current?.focus({ preventScroll: true });
+          if (trigger.current?.getClientRects().length)
+            trigger.current.focus({ preventScroll: true });
         }}
       >
         <div className="score-heading">

@@ -6,11 +6,13 @@ const copy = {
   ru: {
     instruments: 'Инструменты',
     add: 'Добавить инструмент',
+    choose: 'Выбрать',
     complete: 'Установка собрана',
   },
   en: {
     instruments: 'Instruments',
     add: 'Add instrument',
+    choose: 'Choose',
     complete: 'Kit complete',
   },
 };
@@ -32,10 +34,11 @@ export function InstrumentPicker({
       </span>
       {available.length > 0 ? (
         <label className="instrument-picker">
+          <span>{t.add}</span>
           <Icon name="plus" size={16} />
           <select aria-label={t.add} value="" onChange={(e) => onAdd(e.target.value as Instrument)}>
             <option value="" disabled>
-              {t.add}
+              {t.choose}
             </option>
             {available.map((instrument) => (
               <option key={instrument} value={instrument}>

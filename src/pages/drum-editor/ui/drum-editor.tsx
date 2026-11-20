@@ -92,6 +92,7 @@ export function DrumEditor({
   onUpdate,
 }: Props) {
   const language = useLanguage();
+  const editorRoot = useRef<HTMLDivElement>(null);
   const english = language === 'en';
   const t = (ru: string, en: string) => (english ? en : ru);
   const { pattern, revision, change, canUndo, canRedo, undo, redo } = usePattern(
@@ -166,6 +167,9 @@ export function DrumEditor({
   const stopPlayback = playback.stop;
   useEffect(() => {
     if (!visible) {
+      editorRoot.current?.querySelectorAll<HTMLDialogElement>('dialog[open]').forEach((dialog) => {
+        dialog.close();
+      });
       stopPlayback();
       setFillPreview(null);
     }
@@ -334,7 +338,7 @@ export function DrumEditor({
     }
   };
   return (
-    <div className="app-shell">
+    <div className="app-shell" ref={editorRoot}>
       <header className="topbar">
         <a className="brand" href={import.meta.env.BASE_URL} aria-label="SongKit">
           <span className="brand-mark">

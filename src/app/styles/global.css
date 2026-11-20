@@ -1354,6 +1354,7 @@ input[type='range'] {
 }
 .kit-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1366,13 +1367,16 @@ input[type='range'] {
 }
 .instrument-picker {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
   align-items: center;
   gap: 5px;
   color: var(--muted);
 }
 .instrument-picker select {
   min-height: 44px;
-  max-width: 210px;
+  width: max-content;
+  max-width: 100%;
 }
 .kit-complete {
   color: var(--selected-mark);
@@ -1383,8 +1387,8 @@ input[type='range'] {
   .kit-toolbar {
     margin: 0 16px 12px;
   }
-  .instrument-picker select {
-    max-width: 185px;
+  .instrument-picker > svg {
+    display: none;
   }
 }
 .github-link {
