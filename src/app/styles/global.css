@@ -1375,6 +1375,7 @@ input[type='range'] {
 }
 .instrument-picker select {
   min-height: 44px;
+  font-size: 1rem;
   width: max-content;
   max-width: 100%;
 }
