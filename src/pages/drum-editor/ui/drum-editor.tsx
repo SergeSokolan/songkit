@@ -71,6 +71,7 @@ function describePreviewRange({ start, end }: FillRange, language: Language) {
 }
 interface Props {
   visible: boolean;
+  guitarLink?: React.ReactNode;
   guideHref: string;
   onGuide: MouseEventHandler<HTMLAnchorElement>;
   preferences?: ReactNode;
@@ -82,6 +83,7 @@ interface Props {
 }
 export function DrumEditor({
   visible,
+  guitarLink,
   guideHref,
   onGuide,
   preferences,
@@ -791,6 +793,7 @@ export function DrumEditor({
         >
           {t('Звуки MuldjordKit', 'MuldjordKit sounds')}
         </a>
+        {guitarLink}
         <a className="text-button" href={guideHref} onClick={onGuide}>
           {t('Инструкция по установке', 'Installation guide')}
         </a>

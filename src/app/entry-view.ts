@@ -1,8 +1,10 @@
-export type EntryView = 'editor' | 'guide' | 'welcome';
+export type EntryView = 'editor' | 'guide' | 'welcome' | 'guitar';
 
 export function readEntryView(): EntryView | null {
   const view = new URL(window.location.href).searchParams.get('view');
-  return view === 'editor' || view === 'guide' || view === 'welcome' ? view : null;
+  return view === 'guitar' || view === 'editor' || view === 'guide' || view === 'welcome'
+    ? view
+    : null;
 }
 
 export function entryHref(view: EntryView): string {
