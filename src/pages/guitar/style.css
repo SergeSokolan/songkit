@@ -1,0 +1,85 @@
+.guitar {
+  max-width: 40rem;
+  margin: auto;
+  padding: 1rem;
+  color: inherit;
+}
+.guitar h2 {
+  font-size: 1.18rem;
+}
+.guitar .choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.7rem 0;
+}
+.guitar button,
+.guitar select,
+.guitar-link {
+  font: inherit;
+  padding: 0.55em 0.8em;
+}
+.guitar button[aria-pressed='true'] {
+  outline: 2px solid currentColor;
+}
+.guitar section {
+  border-block: 1px solid currentColor;
+  margin: 1rem 0;
+}
+.chord-chart {
+  display: block;
+  width: min(100%, 16rem);
+  height: auto;
+  background: #fffaf0;
+  color: #242421;
+  border-radius: 0.5rem;
+}
+.guitar-link {
+  display: inline-block;
+}
+.chord-description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.guitar-help {
+  margin-block: 1.25rem;
+}
+.guitar-help details {
+  border-top: 1px solid currentColor;
+}
+.guitar-help summary {
+  padding: 0.75rem 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+.voicing-tip {
+  margin-block: 0.25rem 0.75rem;
+}
+.voicing-tip summary {
+  cursor: pointer;
+  padding-block: 0.3rem;
+}
+.key-circle {
+  max-width: 20rem;
+  margin: 1rem auto;
+}
+.key-circle svg {
+  width: 100%;
+}
+.riff-tab {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+.riff-tab td {
+  font-family: monospace;
+  border-bottom: 1px solid currentColor;
+}
+.riff-tab th[aria-current='step'] {
+  outline: 2px solid currentColor;
+}

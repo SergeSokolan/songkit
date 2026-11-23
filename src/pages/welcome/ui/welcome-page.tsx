@@ -6,6 +6,7 @@ import './welcome-page.css';
 
 type WelcomePageProps = {
   editorHref: string;
+  guitarLink?: React.ReactNode;
   guideHref: string;
   onEditor?: MouseEventHandler<HTMLAnchorElement>;
   onGuide?: MouseEventHandler<HTMLAnchorElement>;
@@ -17,7 +18,13 @@ const previewTracks = [
   { instrument: 'kick', steps: '10011000' },
 ] as const;
 
-export function WelcomePage({ editorHref, guideHref, onEditor, onGuide }: WelcomePageProps) {
+export function WelcomePage({
+  editorHref,
+  guitarLink,
+  guideHref,
+  onEditor,
+  onGuide,
+}: WelcomePageProps) {
   const copy = welcomeCopy[useLanguage()];
 
   return (
@@ -49,6 +56,7 @@ export function WelcomePage({ editorHref, guideHref, onEditor, onGuide }: Welcom
                 {copy.openEditor}
                 <span aria-hidden="true">→</span>
               </a>
+              {guitarLink}
               <a className="welcome-guide" href={guideHref} onClick={onGuide}>
                 {copy.installationGuide}
               </a>

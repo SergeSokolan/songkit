@@ -1,3 +1,4 @@
+import { Guitar } from '../pages/guitar';
 import { StrictMode, useEffect, useRef, useState, type MouseEventHandler } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -129,6 +130,11 @@ function App() {
         <div hidden={readyView !== 'editor'} ref={readyView === 'editor' ? visiblePage : undefined}>
           <DrumEditor
             visible={readyView === 'editor'}
+            guitarLink={
+              <a className="text-button" href={entryHref('guitar')} onClick={navigate('guitar')}>
+                {english ? 'Guitar' : 'Гитара'}
+              </a>
+            }
             guideHref={entryHref('guide')}
             onGuide={navigate('guide')}
             preferences={<PreferencesControls />}
@@ -140,10 +146,23 @@ function App() {
           />
         </div>
       )}
+      {readyView === 'guitar' && (
+        <div ref={visiblePage}>
+          <a className="guitar-link" href={entryHref('editor')} onClick={navigate('editor')}>
+            {english ? 'Drums' : 'Ударные'}
+          </a>
+          <Guitar />
+        </div>
+      )}{' '}
       {readyView === 'welcome' && (
         <div ref={visiblePage}>
           <WelcomePage
             editorHref={entryHref('editor')}
+            guitarLink={
+              <a className="text-button" href={entryHref('guitar')} onClick={navigate('guitar')}>
+                {english ? 'Guitar' : 'Гитара'}
+              </a>
+            }
             guideHref={entryHref('guide')}
             onEditor={navigate('editor')}
             onGuide={navigate('guide')}
