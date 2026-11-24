@@ -404,9 +404,11 @@ export function DrumEditor({
       )}
       <main inert={updateBusy}>
         <div className="page-heading editor-heading">
-          <h1>{t('Барабанный редактор', 'Drum editor')}</h1>
-          <nav className="editor-shortcuts" aria-label={t('Действия редактора', 'Editor actions')}>
+          <div className="instrument-heading">
+            <h1>{t('Барабанный редактор', 'Drum editor')}</h1>
             {guitarLink}
+          </div>
+          <nav className="editor-shortcuts" aria-label={t('Действия редактора', 'Editor actions')}>
             <button className="secondary-button" onClick={newPattern}>
               {t('Новая партия', 'New pattern')}
             </button>
