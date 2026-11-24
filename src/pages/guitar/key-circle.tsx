@@ -37,7 +37,7 @@ export function KeyCircle({
                       ? '#e5c8ff'
                       : undefined;
             return (
-              <g key={color ? label(name) : name}>
+              <g key={name}>
                 {color && (
                   <circle
                     cx={x}
@@ -58,7 +58,7 @@ export function KeyCircle({
                     neighbours.includes(name) || name === relative ? 'underline' : undefined
                   }
                 >
-                  {name}
+                  {color ? label(name) : name}
                 </text>
               </g>
             );
@@ -68,8 +68,8 @@ export function KeyCircle({
       <figcaption>
         {sourceName} · {en ? 'Neighbours' : 'Соседи'}: {neighbours.map(label).join(', ')}.{' '}
         {en ? 'Relative key' : 'Параллельная тональность'}: {label(relative)}.{' '}
-        {en ? 'Relatives of neighbours' : 'Параллельные к соседям'}: {related.map(label).join(', ')}
-        .
+        {en ? 'Relatives of neighbours' : 'Параллельные тональности соседей'}:{' '}
+        {related.map(label).join(', ')}.
       </figcaption>
     </figure>
   );
