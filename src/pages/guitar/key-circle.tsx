@@ -1,6 +1,22 @@
-import { type Center, majors, minors, relations } from '../../entities/guitar-loop';
-export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
+import {
+  type Center,
+  majors,
+  minors,
+  relations,
+  spellChord,
+  type Chord,
+} from '../../entities/guitar-loop';
+export function KeyCircle({
+  center,
+  sourceName,
+  en,
+}: {
+  center: Center;
+  sourceName: string;
+  en: boolean;
+}) {
   const { relative, neighbours, related } = relations(center);
+  const label = (c: Chord) => spellChord(center, sourceName, c);
   return (
     <figure className="key-circle">
       <svg aria-hidden="true" viewBox="0 0 300 300">
@@ -21,7 +37,7 @@ export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
                       ? '#e5c8ff'
                       : undefined;
             return (
-              <g key={name}>
+              <g key={color ? label(name) : name}>
                 {color && (
                   <circle
                     cx={x}
@@ -50,9 +66,10 @@ export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
         )}
       </svg>
       <figcaption>
-        {center} · {en ? 'Neighbours' : 'Соседи'}: {neighbours.join(', ')}.{' '}
-        {en ? 'Relative key' : 'Параллельная тональность'}: {relative}.{' '}
-        {en ? 'Relatives of neighbours' : 'Параллельные к соседям'}: {related.join(', ')}.
+        {sourceName} · {en ? 'Neighbours' : 'Соседи'}: {neighbours.map(label).join(', ')}.{' '}
+        {en ? 'Relative key' : 'Параллельная тональность'}: {label(relative)}.{' '}
+        {en ? 'Relatives of neighbours' : 'Параллельные к соседям'}: {related.map(label).join(', ')}
+        .
       </figcaption>
     </figure>
   );

@@ -6,6 +6,8 @@ import {
   chords,
   relations,
   chordName,
+  spellChord,
+  inKey,
   isOpen,
   pitches,
   defaultRiff,
@@ -181,6 +183,10 @@ export function Guitar() {
       t('Заменить свой рифф новым образцом?', 'Replace your edited riff with a new pattern?'),
     );
   const source = loop?.bars[index] ?? 'Am';
+  const labels = loop?.labels ?? loop?.bars ?? [];
+  const sourceName = labels[index] ?? source;
+  const nameOf = (c: Chord) => spellChord(source, sourceName, c);
+  const currentName = candidate ? nameOf(candidate) : sourceName;
   const relatives = relations(source);
   const options = [relatives.relative, ...relatives.neighbours, ...relatives.related];
   return (
@@ -222,7 +228,7 @@ export function Guitar() {
           <p>
             {loop.bars.length === 1 ? (
               <label>
-                {t('Тональность', 'Key')}{' '}
+                {t('Тональность партии', 'Loop key')}{' '}
                 <select
                   value={loop.center}
                   onChange={(event) => {
@@ -232,6 +238,7 @@ export function Guitar() {
                       {
                         ...loop,
                         riffs: undefined,
+                        labels: undefined,
                         center,
                         bars: [center],
                         forms: [openForm(center)],
@@ -249,7 +256,7 @@ export function Guitar() {
               </label>
             ) : (
               <>
-                {t('Тональность', 'Key')} ·{' '}
+                {t('Тональность партии', 'Loop key')} ·{' '}
                 <strong>
                   {loop.center} ·{' '}
                   {chordName(loop.center, en) + (!en && !loop.center.endsWith('m') ? ' мажор' : '')}
@@ -258,7 +265,7 @@ export function Guitar() {
             )}
           </p>
           <div className="choices">
-            {loop.bars.map((c, i) => (
+            {loop.bars.map((_, i) => (
               <button
                 key={i}
                 aria-pressed={i === index}
@@ -269,7 +276,7 @@ export function Guitar() {
                   setReplace(false);
                 }}
               >
-                {i + 1} · {c}
+                {i + 1} · {labels[i]}
               </button>
             ))}
           </div>
@@ -339,15 +346,13 @@ export function Guitar() {
             <>
               {playing && repeating && !candidate && (
                 <p>
-                  {t('Дальше', 'Next')} · {loop.bars[(index + 1) % loop.bars.length]}
+                  {t('Дальше', 'Next')} · {labels[(index + 1) % loop.bars.length]}
                 </p>
               )}
               {(loop.bars.length < 4 || replace) && (
                 <>
                   <h2>
-                    {replace
-                      ? t('Чем заменить?', 'Replace with')
-                      : t('Что сыграть после', 'What follows') + ' ' + source + '?'}
+                    {t('Подбор от', 'Suggestions from')} {sourceName}
                   </h2>
                   <div className="choices">
                     {options.map((c) => (
@@ -359,7 +364,13 @@ export function Guitar() {
                           void listen([source, c], false, [forms[index], openForm(c)]);
                         }}
                       >
-                        ▷ {c}
+                        ▷ {nameOf(c)}
+                        {!inKey(loop.center, c) && (
+                          <small className="outside-key">
+                            {' '}
+                            {t('Вне гаммы', 'Outside scale')} {loop.center}
+                          </small>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -367,10 +378,61 @@ export function Guitar() {
               )}
               <details>
                 <summary>
-                  {t('Связи на круге', 'Circle relationships')} · {source}
+                  {t('Связи на круге', 'Circle relationships')} · {sourceName}
                 </summary>
-                <KeyCircle center={source} en={en} />
+                <KeyCircle center={source} sourceName={sourceName} en={en} />
               </details>
+
+              {loop.center === 'Am' && !candidate && !replace && (
+                <details>
+                  <summary>{t('Вернуться в Am через E', 'Return to Am via E')}</summary>
+                  <p>
+                    {t(
+                      'В гармоническом ля миноре соль повышается до соль-диеза. Сыграйте E, затем Am.',
+                      'In A harmonic minor, G rises to G sharp. Play E, then Am.',
+                    )}
+                  </p>
+                  <div className="choices">
+                    <button onClick={() => void listen(['E', 'Am'], false)}>
+                      {t('Послушать E → Am', 'Hear E → Am')}
+                    </button>
+                    {loop.bars.length <= 2 ? (
+                      <button
+                        onClick={() => {
+                          const at = index + 1;
+                          const bars = [...loop.bars],
+                            nextForms = [...forms],
+                            nextRiffs = [...riffs],
+                            nextLabels = [...labels];
+                          bars.splice(at, 0, 'E', 'Am');
+                          nextForms.splice(at, 0, 'E', 'A');
+                          nextRiffs.splice(at, 0, null, null);
+                          nextLabels.splice(at, 0, 'E', 'Am');
+                          change(
+                            {
+                              ...loop,
+                              bars,
+                              forms: nextForms,
+                              riffs: nextRiffs,
+                              labels: nextLabels,
+                            },
+                            at,
+                          );
+                        }}
+                      >
+                        {t('Добавить E → Am', 'Add E → Am')}
+                      </button>
+                    ) : (
+                      <span>
+                        {t(
+                          'Для вставки нужны два свободных такта.',
+                          'Inserting this pair needs two free bars.',
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </details>
+              )}
               {candidate && (
                 <div className="choices">
                   <button
@@ -378,15 +440,21 @@ export function Guitar() {
                       const bars = [...loop.bars];
                       const at = replace ? index : index + 1;
                       if (replace && !resetRiff(at)) return;
+                      const nextLabels = [...labels];
+                      nextLabels.splice(at, replace ? 1 : 0, currentName);
                       const nextRiffs = [...riffs];
                       nextRiffs.splice(at, replace ? 1 : 0, null);
                       bars.splice(at, replace ? 1 : 0, candidate);
                       const nextForms = [...forms];
                       nextForms.splice(at, replace ? 1 : 0, previewForm);
-                      change({ ...loop, bars, forms: nextForms, riffs: nextRiffs }, at);
+                      change(
+                        { ...loop, bars, forms: nextForms, riffs: nextRiffs, labels: nextLabels },
+                        at,
+                      );
                     }}
                   >
-                    {replace ? t('Заменить на', 'Replace with') : t('Добавить', 'Add')} {candidate}
+                    {replace ? t('Заменить на', 'Replace with') : t('Добавить', 'Add')}{' '}
+                    {currentName}
                   </button>
                   <button
                     onClick={() => {
@@ -403,7 +471,7 @@ export function Guitar() {
                 <section>
                   <h2>
                     {candidate ? t('Вариант', 'Preview') : t('Такт', 'Bar') + ' ' + (index + 1)} ·{' '}
-                    {chord} · {chordName(chord, en)}
+                    {currentName} · {chordName(currentName, en)}
                   </h2>
                   <div className="choices">
                     <label>
@@ -445,22 +513,22 @@ export function Guitar() {
                     <p>
                       {isOpen(chord, form)
                         ? t(
-                            `Начните с открытого ${chord}. Если переход к следующему аккорду удобен, эту постановку можно оставить на всю партию.`,
-                            `Start with open ${chord}. If the next chord is easy to reach, you can use this shape throughout the loop.`,
+                            `Начните с открытого ${currentName}. Если переход к следующему аккорду удобен, эту постановку можно оставить на всю партию.`,
+                            `Start with open ${currentName}. If the next chord is easy to reach, you can use this shape throughout the loop.`,
                           )
                         : t(
-                            `Вы играете ${chord}. Буква ${form} подсказывает знакомую постановку, от которой взята схема. Здесь она начинается с лада ${grip.start}.`,
-                            `You are playing ${chord}. The letter ${form} names the familiar shape this grip comes from. Here it starts at fret ${grip.start}.`,
+                            `Вы играете ${currentName}. Буква ${form} подсказывает знакомую постановку, от которой взята схема. Здесь она начинается с лада ${grip.start}.`,
+                            `You are playing ${currentName}. The letter ${form} names the familiar shape this grip comes from. Here it starts at fret ${grip.start}.`,
                           )}
                     </p>
                     <p>
                       {t(
-                        `Попробуйте две постановки ${chord} по очереди. Аккорд тот же, а звук и положение руки меняются. Выберите ту, из которой легче перейти к следующему такту.`,
-                        `Try two shapes of ${chord} in turn. The chord stays the same while its sound and your hand position change. Pick the one that makes the next bar easier to reach.`,
+                        `Попробуйте две постановки ${currentName} по очереди. Аккорд тот же, а звук и положение руки меняются. Выберите ту, из которой легче перейти к следующему такту.`,
+                        `Try two shapes of ${currentName} in turn. The chord stays the same while its sound and your hand position change. Pick the one that makes the next bar easier to reach.`,
                       )}
                     </p>
                   </details>
-                  <ChordDiagram chord={chord} form={form} />
+                  <ChordDiagram chord={chord} form={form} label={currentName} />
                   <ul className="chord-description">
                     {grip.frets.map((v, i) => (
                       <li key={i}>
@@ -502,6 +570,7 @@ export function Guitar() {
                               ...loop,
                               bars,
                               riffs: riffs.filter((_, i) => i !== index),
+                              labels: labels.filter((_, i) => i !== index),
                               forms: forms.filter((_, i) => i !== index),
                             }
                           : null,
@@ -527,15 +596,15 @@ export function Guitar() {
           <details>
             <summary>
               {t(
-                'Как выбрать следующий аккорд? · Квартоквинтовый круг',
+                'Как выбрать следующий аккорд? · Квинтовый круг тональностей',
                 'How do I choose the next chord? · Circle of fifths',
               )}
             </summary>
 
             <p>
               {t(
-                'Подбор начинается с выбранного такта. Можно попробовать параллельный аккорд, одного из двух соседей или параллельный аккорд соседа.',
-                'Suggestions start from the selected bar. Try its relative, either neighbour, or a neighbour’s relative.',
+                'Подбор начинается с выбранного такта. Ля минор и до мажор — параллельные тональности с одинаковыми знаками при ключе. После Am попробуйте аккорд C.',
+                'Suggestions start from the selected bar. A minor and C major are relative keys with the same key signature. Try C after Am.',
               )}
             </p>
             <p>
