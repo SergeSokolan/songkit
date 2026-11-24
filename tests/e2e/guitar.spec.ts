@@ -38,3 +38,19 @@ test('build and reopen a guitar loop offline', async ({ page, context }) => {
   await page.getByRole('button', { name: 'Рифф', exact: true }).click();
   await expect(page.getByLabel('Доля 4')).toHaveValue('-1');
 });
+
+test('insert a related chord after the selected bar', async ({ page }) => {
+  await page.goto('?view=editor');
+  const guitar = page.getByRole('link', { name: 'Гитара', exact: true });
+  await expect(guitar).toBeInViewport();
+  await guitar.click();
+  await page.getByLabel('Тональность').selectOption('F♯');
+  await page.getByRole('button', { name: '▷ D♯m', exact: true }).click();
+  await page.getByRole('button', { name: 'Добавить D♯m' }).click();
+  await page.getByRole('button', { name: '1 · F♯' }).click();
+  await page.getByRole('button', { name: '▷ B', exact: true }).click();
+  await page.getByRole('button', { name: 'Добавить B', exact: true }).click();
+  await expect(page.getByRole('button', { name: '3 · D♯m' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: '2 · B' })).toBeVisible();
+});

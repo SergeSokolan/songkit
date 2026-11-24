@@ -406,6 +406,7 @@ export function DrumEditor({
         <div className="page-heading editor-heading">
           <h1>{t('Барабанный редактор', 'Drum editor')}</h1>
           <nav className="editor-shortcuts" aria-label={t('Действия редактора', 'Editor actions')}>
+            {guitarLink}
             <button className="secondary-button" onClick={newPattern}>
               {t('Новая партия', 'New pattern')}
             </button>
@@ -793,7 +794,7 @@ export function DrumEditor({
         >
           {t('Звуки MuldjordKit', 'MuldjordKit sounds')}
         </a>
-        {guitarLink}
+
         <a className="text-button" href={guideHref} onClick={onGuide}>
           {t('Инструкция по установке', 'Installation guide')}
         </a>
