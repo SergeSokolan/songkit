@@ -2014,3 +2014,12 @@ select:hover {
   display: inline-flex;
   align-items: center;
 }
+@media (max-width: 760px) {
+  .editor-heading {
+    padding-block: 0;
+    gap: 0;
+  }
+  .grid-entry-hint {
+    padding-block: 2px;
+  }
+}
