@@ -1,5 +1,5 @@
 import { voicing, type Chord, type Form } from '../../entities/guitar-loop';
-export function ChordDiagram({ chord, form }: { chord: Chord; form: Form }) {
+export function ChordDiagram({ chord, form, label }: { chord: Chord; form: Form; label: string }) {
   const { frets, fingers, start } = voicing(chord, form);
   const nut = 74,
     space = 30,
@@ -9,7 +9,7 @@ export function ChordDiagram({ chord, form }: { chord: Chord; form: Form }) {
     <svg className="chord-chart" viewBox="0 0 238 232" aria-hidden="true">
       <g fill="currentColor" textAnchor="middle" fontFamily="system-ui,sans-serif">
         <text x="119" y="28" fontSize="25" fontWeight="700">
-          {chord}
+          {label}
         </text>
         {[1, 2, 3, 4].map((fret) => (
           <g key={fret + start - 1}>

@@ -61,7 +61,7 @@ export function chordForms(chord: Chord): Form[] {
 export function openForm(chord: Chord): Form {
   return chordForms(chord)[0];
 }
-export function chordName(chord: Chord, en: boolean) {
+export function chordName(chord: string, en: boolean) {
   const minor = chord.endsWith('m'),
     root = chord.replace(/m$/, '');
   const names: Record<string, string> = {
@@ -76,7 +76,9 @@ export function chordName(chord: Chord, en: boolean) {
   return en
     ? root + (minor ? ' minor' : ' major')
     : names[root[0]] +
-        (root.includes('♭') ? ' бемоль' : root.includes('♯') ? ' диез' : '') +
+        ({ '♯': ' диез', '♭': ' бемоль', '♯♯': ' дубль-диез', '♭♭': ' дубль-бемоль' }[
+          root.slice(1)
+        ] ?? '') +
         (minor ? ' минор' : '');
 }
 // Movable fingerings. The compact C, G and D grips retain all three chord tones.
@@ -117,6 +119,7 @@ export type Loop = {
   version: 1;
   center: Center;
   bars: Chord[];
+  labels?: string[];
   forms?: Form[];
   riffs?: (number[] | null)[];
   bpm: number;
@@ -139,6 +142,10 @@ export function validLoop(value: unknown): value is Loop {
         v.forms.length === v.bars.length &&
         v.forms.every((f) => typeof f === 'string' && Object.hasOwn(rootNotes, f)))) &&
     v.bars.every((c) => chords.includes(c)) &&
+    (v.labels === undefined ||
+      (Array.isArray(v.labels) &&
+        v.labels.length === v.bars.length &&
+        v.labels.every((n, i) => validLabel(n, v.bars![i])))) &&
     (v.riffs === undefined ||
       (Array.isArray(v.riffs) &&
         v.riffs.length === v.bars.length &&
@@ -165,4 +172,42 @@ export function pitches(chord: Chord, form?: Form) {
 export function defaultRiff(frets: number[]) {
   const strings = frets.flatMap((f, i) => (f >= 0 ? [i] : [])).slice(-3);
   return [strings[0], strings[1], strings[2], strings[1]];
+}
+
+const letters = 'CDEFGAB';
+const naturals = [0, 2, 4, 5, 7, 9, 11];
+const scale = (chord: Chord) =>
+  chord.endsWith('m') ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
+function validLabel(name: unknown, chord: Chord) {
+  if (
+    typeof name !== 'string' ||
+    !/^[A-G](♭{1,2}|♯{1,2})?m?$/.test(name) ||
+    name.endsWith('m') !== chord.endsWith('m')
+  )
+    return false;
+  const a = name.replace(/[A-Gm]/g, '');
+  return (
+    (naturals[letters.indexOf(name[0])] + (a.startsWith('♭') ? -1 : 1) * a.length + 12) % 12 ===
+    rootNote(chord)
+  );
+}
+export function spellChord(source: Chord, sourceName: string, target: Chord) {
+  const degree = scale(source).indexOf((rootNote(target) - rootNote(source) + 12) % 12);
+  if (degree < 0) return target;
+  const letter = (letters.indexOf(sourceName[0]) + degree) % 7;
+  const delta = ((rootNote(target) - naturals[letter] + 18) % 12) - 6;
+  if (Math.abs(delta) > 2) return target;
+  return (
+    letters[letter] +
+    (delta < 0 ? '♭' : '♯').repeat(Math.abs(delta)) +
+    (target.endsWith('m') ? 'm' : '')
+  );
+}
+export function inKey(key: Chord, target: Chord) {
+  const root = rootNote(target),
+    tonic = rootNote(key),
+    degrees = scale(key);
+  return [0, target.endsWith('m') ? 3 : 4, 7].every((n) =>
+    degrees.includes((root + n - tonic + 12) % 12),
+  );
 }

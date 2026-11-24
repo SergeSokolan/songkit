@@ -54,3 +54,24 @@ test('insert a related chord after the selected bar', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('button', { name: '2 · B' })).toBeVisible();
 });
+
+test('contextual names survive reload, scale badges and harmonic cadence', async ({ page }) => {
+  await page.goto('?view=guitar');
+  await page.getByLabel('Тональность партии').selectOption('F♯');
+  await page.getByRole('button', { name: '▷ C♯', exact: true }).click();
+  await expect(page.locator('.chord-chart').getByText('C♯', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Добавить C♯', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: '2 · C♯', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Подбор от C♯' })).toBeVisible();
+  await page.getByRole('button', { name: 'Удалить такт' }).click();
+  await page.getByLabel('Тональность партии').selectOption('Am');
+  await page.getByRole('button', { name: '▷ Dm', exact: true }).click();
+  await page.getByRole('button', { name: 'Добавить Dm' }).click();
+  await expect(page.getByRole('button', { name: /▷ B♭.*Вне гаммы Am/ })).toBeVisible();
+  await page.getByText('Вернуться в Am через E', { exact: true }).click();
+  await page.getByRole('button', { name: 'Добавить E → Am' }).click();
+  await expect(page.getByRole('button', { name: '4 · Am' })).toBeVisible();
+  await page.getByRole('button', { name: 'Отменить правку' }).click();
+  await expect(page.getByRole('button', { name: '4 · Am' })).toHaveCount(0);
+});
