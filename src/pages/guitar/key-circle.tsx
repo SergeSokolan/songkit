@@ -1,12 +1,6 @@
-import { type Center } from '../../entities/guitar-loop';
-const majors = ['C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'D♭', 'A♭', 'E♭', 'B♭', 'F'];
-const minors = ['Am', 'Em', 'Bm', 'F♯m', 'C♯m', 'G♯m', 'D♯m', 'B♭m', 'Fm', 'Cm', 'Gm', 'Dm'];
+import { type Center, majors, minors, relations } from '../../entities/guitar-loop';
 export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
-  const minor = center.endsWith('m'),
-    ring = minor ? minors : majors;
-  const i = ring.indexOf(center),
-    neighbours = [ring[(i + 11) % 12], ring[(i + 1) % 12]],
-    relative = (minor ? majors : minors)[i];
+  const { relative, neighbours, related } = relations(center);
   return (
     <figure className="key-circle">
       <svg aria-hidden="true" viewBox="0 0 300 300">
@@ -16,14 +10,33 @@ export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
               r = level ? 88 : 130,
               x = 150 + r * Math.sin(a),
               y = 150 - r * Math.cos(a);
+            const color =
+              name === center
+                ? '#1f4784'
+                : name === relative
+                  ? '#ffe49a'
+                  : neighbours.includes(name)
+                    ? '#92e1d3'
+                    : related.includes(name)
+                      ? '#e5c8ff'
+                      : undefined;
             return (
               <g key={name}>
-                {name === center && <circle cx={x} cy={y} r="19" fill="currentColor" />}
+                {color && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={level ? 18 : 19}
+                    fill={color}
+                    stroke="currentColor"
+                    strokeWidth={name === center ? 2 : 1}
+                  />
+                )}
                 <text
                   x={x}
                   y={y + 5}
                   textAnchor="middle"
-                  fill={name === center ? 'Canvas' : 'currentColor'}
+                  fill={name === center ? 'white' : color ? '#17232a' : 'currentColor'}
                   fontWeight={neighbours.includes(name) || name === relative ? 800 : 500}
                   textDecoration={
                     neighbours.includes(name) || name === relative ? 'underline' : undefined
@@ -38,7 +51,8 @@ export function KeyCircle({ center, en }: { center: Center; en: boolean }) {
       </svg>
       <figcaption>
         {center} · {en ? 'Neighbours' : 'Соседи'}: {neighbours.join(', ')}.{' '}
-        {en ? 'Relative key' : 'Параллельная тональность'}: {relative}.
+        {en ? 'Relative key' : 'Параллельная тональность'}: {relative}.{' '}
+        {en ? 'Relatives of neighbours' : 'Параллельные к соседям'}: {related.join(', ')}.
       </figcaption>
     </figure>
   );

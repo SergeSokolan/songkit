@@ -131,7 +131,11 @@ function App() {
           <DrumEditor
             visible={readyView === 'editor'}
             guitarLink={
-              <a className="text-button" href={entryHref('guitar')} onClick={navigate('guitar')}>
+              <a
+                className="secondary-button"
+                href={entryHref('guitar')}
+                onClick={navigate('guitar')}
+              >
                 {english ? 'Guitar' : 'Гитара'}
               </a>
             }
@@ -159,7 +163,11 @@ function App() {
           <WelcomePage
             editorHref={entryHref('editor')}
             guitarLink={
-              <a className="text-button" href={entryHref('guitar')} onClick={navigate('guitar')}>
+              <a
+                className="secondary-button"
+                href={entryHref('guitar')}
+                onClick={navigate('guitar')}
+              >
                 {english ? 'Guitar' : 'Гитара'}
               </a>
             }
