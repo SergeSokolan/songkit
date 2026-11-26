@@ -10,8 +10,8 @@ it('keeps only the latest 100 undo steps for a guitar session', async () => {
   const tempo = await screen.findByLabelText('Темп');
   for (let i = 0; i < 101; i++)
     fireEvent.change(tempo, { target: { value: i % 2 ? '122' : '121' } });
-  for (let i = 0; i < 100; i++)
-    fireEvent.click(screen.getByRole('button', { name: 'Отменить правку' }));
+  const undo = screen.getByRole('button', { name: 'Отменить правку' });
+  for (let i = 0; i < 100; i++) fireEvent.click(undo);
   expect(tempo).toHaveValue('121');
   expect(screen.queryByRole('button', { name: 'Отменить правку' })).not.toBeInTheDocument();
 }, 15000);
