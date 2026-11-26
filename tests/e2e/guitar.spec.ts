@@ -58,6 +58,9 @@ test('insert a related chord after the selected bar', async ({ page }) => {
 test('contextual names survive reload, scale badges and harmonic cadence', async ({ page }) => {
   await page.goto('?view=guitar');
   await page.getByLabel('Тональность партии').selectOption('F♯');
+  await page.getByText('Связи на круге').click();
+  await expect(page.locator('.key-circle svg').getByText('C♯', { exact: true })).toBeVisible();
+  await expect(page.locator('.key-circle svg').getByText('A♯m', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '▷ C♯', exact: true }).click();
   await expect(page.locator('.chord-chart').getByText('C♯', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Добавить C♯', exact: true }).click();

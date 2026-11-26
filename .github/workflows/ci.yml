@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       BASE_PATH: /songkit/
     steps:
@@ -41,12 +41,12 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit
       - run: npm run check
       - name: Install browser dependencies and browsers
-        timeout-minutes: 6
+        timeout-minutes: 10
         run: |
-          # Azure's regional package mirror stalled repeatedly; keep signed Ubuntu packages.
-          for source in /etc/apt/apt-mirrors*.txt /etc/apt/sources.list.d/ubuntu.sources; do
+          # Use the primary archive when cloud-region Ubuntu mirrors stall.
+          for source in /etc/apt/apt-mirrors*.txt /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
             if [ -f "$source" ]; then
-              sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g; s|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+              sudo sed -E -i 's#https?://(azure|[a-z0-9-]+\.ec2)\.archive\.ubuntu\.com/ubuntu#https://archive.ubuntu.com/ubuntu#g' "$source"
             fi
           done
           npx playwright install --with-deps chromium webkit
