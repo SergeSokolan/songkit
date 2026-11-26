@@ -2023,3 +2023,18 @@ select:hover {
     padding-block: 2px;
   }
 }
+
+@media (any-pointer: coarse) {
+  .bar-tab {
+    min-width: 44px;
+  }
+  .tempo-value input,
+  .audio-help summary,
+  .audio-help-content a {
+    min-height: 44px;
+  }
+  .audio-help-content a {
+    display: inline-flex;
+    align-items: center;
+  }
+}

@@ -87,3 +87,29 @@
   display: block;
   font-size: 0.8em;
 }
+
+@media (any-pointer: coarse) {
+  .guitar button,
+  .guitar select,
+  .guitar summary,
+  .guitar-link {
+    box-sizing: border-box;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .guitar select {
+    font-size: max(1rem, 16px);
+    padding-inline-end: 1.8em;
+  }
+  .guitar summary {
+    cursor: pointer;
+    padding-block: 0.7rem;
+  }
+  .guitar details + details {
+    border-top: 1px solid var(--separator);
+  }
+  .guitar-link {
+    display: inline-flex;
+    align-items: center;
+  }
+}
