@@ -18,29 +18,13 @@ export function RiffEditor({
   return (
     <section>
       <h2>{en ? 'Riff' : 'Рифф'}</h2>
-      <table className="riff-tab">
-        <caption>{en ? 'Tablature' : 'Табулатура'}</caption>
-        <thead>
-          <tr>
-            <th>{en ? 'Beat' : 'Доля'}</th>
-            {steps.map((_, i) => (
-              <th key={i} aria-current={active === i ? 'step' : undefined}>
-                {i + 1}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[5, 4, 3, 2, 1, 0].map((s) => (
-            <tr key={s}>
-              <th>{['E', 'A', 'D', 'G', 'B', 'e'][s]}</th>
-              {steps.map((note, i) => (
-                <td key={i}>{note === s ? frets[s] : '—'}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <RiffTab
+        frets={frets}
+        steps={steps}
+        active={active}
+        en={en}
+        caption={en ? 'Tablature' : 'Табулатура'}
+      />
       <div className="choices">
         {steps.map((n, i) => (
           <label key={i}>
@@ -72,5 +56,45 @@ export function RiffEditor({
         )}
       </div>
     </section>
+  );
+}
+
+export function RiffTab({
+  frets,
+  steps,
+  active,
+  en,
+  caption,
+}: {
+  frets: number[];
+  steps: number[];
+  active: number;
+  en: boolean;
+  caption: string;
+}) {
+  return (
+    <table className="riff-tab">
+      <caption>{caption}</caption>
+      <thead>
+        <tr>
+          <th>{en ? 'Beat' : 'Доля'}</th>
+          {steps.map((_, i) => (
+            <th key={i} aria-current={active === i ? 'step' : undefined}>
+              {i + 1}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {[5, 4, 3, 2, 1, 0].map((s) => (
+          <tr key={s}>
+            <th>{['E', 'A', 'D', 'G', 'B', 'e'][s]}</th>
+            {steps.map((note, i) => (
+              <td key={i}>{note === s ? frets[s] : '—'}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

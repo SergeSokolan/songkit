@@ -24,6 +24,10 @@ const englishMessages = new Map([
   ['Закройте другую вкладку SongKit и повторите', 'Close the other SongKit tab and try again'],
   ['Сохранение…', 'Saving…'],
   ['Черновик на устройстве', 'Draft saved on this device'],
+  [
+    'Черновик изменён в другой вкладке. Скачайте проект и перезагрузите страницу.',
+    'The draft changed in another tab. Download your project and reload this page.',
+  ],
   ['Не удалось сохранить. Скачайте проект.', 'Could not save. Download the project.'],
   [
     'Автосохранение недоступно. Скачайте проект перед обновлением.',

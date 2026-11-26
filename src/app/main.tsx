@@ -25,9 +25,13 @@ function App() {
   const [initialEditor] = useState(() => alreadyOpenedEditor() || installed);
   const [explicitView, setExplicitView] = useState(readEntryView);
   const [keepEditor, setKeepEditor] = useState(false);
-  const focusHeading = useRef(false);
+  const focusHeading = useRef<'pointer' | 'keyboard' | 'history' | null>(null);
   const visiblePage = useRef<HTMLDivElement>(null);
-  const [boot, setBoot] = useState<{ draft: Draft | null; error: string } | null>(null);
+  const [boot, setBoot] = useState<{
+    draft: Draft | null;
+    error: string;
+    route: EntryView | null;
+  } | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineError, setOfflineError] = useState('');
   const {
@@ -50,19 +54,27 @@ function App() {
     },
   });
   useEffect(() => {
+    if (keepEditor || (explicitView && explicitView !== 'editor')) return;
     let active = true;
     loadDraft().then(
       (draft) => {
-        if (active) setBoot({ draft, error: '' });
+        if (active) setBoot({ draft, error: '', route: explicitView });
       },
       (error) => {
         if (active)
           setBoot({
             draft: null,
+            route: explicitView,
             error: error instanceof Error ? error.message : 'Хранилище недоступно',
           });
       },
     );
+    return () => {
+      active = false;
+    };
+  }, [explicitView, keepEditor]);
+  useEffect(() => {
+    let active = true;
     if ('serviceWorker' in navigator)
       void navigator.serviceWorker.ready.then(() => {
         if (active) setReady(true);
@@ -73,10 +85,11 @@ function App() {
   }, []);
   const view =
     explicitView ?? (boot && (initialEditor || boot.draft || boot.error ? 'editor' : 'welcome'));
-  const readyView = view === 'editor' && !boot ? null : view;
+  const readyView =
+    view === 'editor' && (!boot || (!keepEditor && boot.route !== explicitView)) ? null : view;
   useEffect(() => {
     const pop = () => {
-      focusHeading.current = true;
+      focusHeading.current = 'history';
       setExplicitView(readEntryView());
     };
     window.addEventListener('popstate', pop);
@@ -88,9 +101,11 @@ function App() {
       rememberEditorVisit();
     }
     if (readyView && focusHeading.current) {
-      focusHeading.current = false;
+      const focusOrigin = focusHeading.current;
+      focusHeading.current = null;
       const heading = visiblePage.current?.querySelector('h1');
       if (heading) {
+        heading.dataset.routeFocus = focusOrigin;
         heading.tabIndex = -1;
         heading.focus({ preventScroll: true });
       }
@@ -113,7 +128,7 @@ function App() {
       event.preventDefault();
       if (readyView === next) return;
       history.pushState(null, '', entryHref(next));
-      focusHeading.current = true;
+      focusHeading.current = event.detail > 0 ? 'pointer' : 'keyboard';
       setExplicitView(next);
     };
 

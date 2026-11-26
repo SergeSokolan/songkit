@@ -2038,3 +2038,12 @@ select:hover {
     align-items: center;
   }
 }
+
+h1[data-route-focus='pointer']:focus {
+  outline: none;
+}
+h1[data-route-focus='keyboard']:focus-visible,
+h1[data-route-focus='history']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}

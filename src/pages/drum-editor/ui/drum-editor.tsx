@@ -148,7 +148,7 @@ export function DrumEditor({
     }),
     [pattern, view, bar],
   );
-  const autosave = useAutosave(draft, saveEnabled);
+  const autosave = useAutosave(draft, saveEnabled, initial);
   const playback = usePlayback(
     pattern,
     draft.view.position,

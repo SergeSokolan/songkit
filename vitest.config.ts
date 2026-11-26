@@ -10,6 +10,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],
       include: [
+        'src/entities/guitar-loop/index.ts',
         'src/entities/drum-pattern/model/**/*.ts',
         'src/features/manage-fills/model/fills.ts',
         'src/features/manage-fills/model/catalog.ts',

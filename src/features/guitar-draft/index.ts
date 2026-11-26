@@ -1,71 +1,100 @@
 import { validLoop, type Loop } from '../../entities/guitar-loop';
-async function access(write: boolean, value?: Loop | null): Promise<Loop | null> {
-  const db = await new Promise<IDBDatabase>((resolve, reject) => {
-    const r = indexedDB.open('songkit-guitar', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('drafts');
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
+import { accessDraft, DraftConflict } from '../../shared/lib/draft-store';
+
+const journalKey = 'songkit.guitar.pending';
+type Journal = { format: 2; loop: Loop | null; bases: string[] };
+let base = 'null';
+let writing: string | undefined;
+let sequence = 0;
+let pending = Promise.resolve();
+const fingerprint = (raw: unknown) => JSON.stringify(raw ?? null);
+
+function writeJournal(value: Journal | null) {
   try {
-    return await new Promise<Loop | null>((resolve, reject) => {
-      const tx = db.transaction('drafts', write ? 'readwrite' : 'readonly');
-      const store = tx.objectStore('drafts');
-      const request = write
-        ? value
-          ? store.put(value, 'current')
-          : store.delete('current')
-        : store.get('current');
-      tx.oncomplete = () => {
-        if (write || request.result === undefined) resolve(null);
-        else if (validLoop(request.result)) resolve(request.result);
-        else reject(new Error('Invalid guitar draft'));
-      };
-      tx.onabort = () => reject(tx.error);
-    });
-  } finally {
-    db.close();
+    if (value) sessionStorage.setItem(journalKey, JSON.stringify(value));
+    else sessionStorage.removeItem(journalKey);
+  } catch {
+    // IndexedDB still works when tab storage is unavailable.
   }
 }
-let pending = Promise.resolve<Loop | null>(null);
-const journalKey = 'songkit.guitar.pending';
-let sequence = 0;
+
+function readJournal(): Journal | null {
+  let raw: string | null;
+  try {
+    raw = sessionStorage.getItem(journalKey);
+  } catch {
+    return null;
+  }
+  if (raw === null) return null;
+  const value = JSON.parse(raw);
+  if (
+    value?.format === 2 &&
+    Array.isArray(value.bases) &&
+    value.bases.length > 0 &&
+    value.bases.every((item: unknown) => typeof item === 'string') &&
+    (value.loop === null || validLoop(value.loop))
+  )
+    return value;
+  // Older journals have no baseline. Replay only over an empty or identical draft.
+  if (value === null || validLoop(value)) return { format: 2, loop: value, bases: ['null'] };
+  throw new Error('Invalid pending guitar draft');
+}
+
+async function commit(loop: Loop | null, bases: string[]) {
+  const next = fingerprint(loop);
+  await accessDraft(
+    'songkit-guitar',
+    (raw) => {
+      const stored = fingerprint(raw);
+      if (stored === next) return { result: undefined };
+      if (!bases.includes(stored)) throw new DraftConflict();
+      return { result: undefined, write: loop };
+    },
+    'readwrite',
+  );
+  base = next;
+}
+
 export function saveLoop(loop: Loop | null) {
   const id = ++sequence;
-  // A navigation can interrupt an IDB transaction. Keep the latest edit in this tab until commit.
-  try {
-    sessionStorage.setItem(journalKey, JSON.stringify(loop));
-  } catch {
-    /* IndexedDB remains available in some restricted browsers. */
-  }
+  // Only the active transaction and the latest queued edit can survive navigation.
+  const bases = writing === undefined ? [base] : [base, writing];
+  writeJournal({ format: 2, loop, bases });
   pending = pending
-    .catch(() => null)
-    .then(() => access(true, loop))
-    .then((result) => {
-      if (id === sequence) {
-        try {
-          sessionStorage.removeItem(journalKey);
-        } catch {
-          /* Storage access is optional. */
-        }
+    .catch(() => {})
+    .then(async () => {
+      if (id !== sequence) return;
+      writing = fingerprint(loop);
+      try {
+        await commit(loop, [base]);
+        if (id === sequence) writeJournal(null);
+      } finally {
+        writing = undefined;
       }
-      return result;
     });
   return pending;
 }
-export async function loadLoop() {
-  await pending.catch(() => null);
-  let journal: string | null = null;
-  try {
-    journal = sessionStorage.getItem(journalKey);
-  } catch {
-    /* Continue with IndexedDB. */
+
+export async function loadLoop(
+  discardPending = false,
+): Promise<{ loop: Loop | null; conflict: boolean }> {
+  await pending.catch(() => {});
+  const raw = await accessDraft('songkit-guitar', (value) => ({ result: value }));
+  base = fingerprint(raw);
+  const journal = discardPending ? null : readJournal();
+  if (journal) {
+    try {
+      await commit(journal.loop, journal.bases);
+      writeJournal(null);
+      return { loop: journal.loop, conflict: false };
+    } catch (error) {
+      if (!(error instanceof DraftConflict)) throw error;
+      // Keep the local revision editable without adopting the other tab's baseline.
+      base = journal.bases[0];
+      return { loop: journal.loop, conflict: true };
+    }
   }
-  if (journal !== null) {
-    const recovered: unknown = JSON.parse(journal);
-    if (recovered !== null && !validLoop(recovered))
-      throw new Error('Invalid pending guitar draft');
-    await saveLoop(recovered);
-    return recovered;
-  }
-  return access(false);
+  if (raw !== undefined && !validLoop(raw)) throw new Error('Invalid guitar draft');
+  if (discardPending) writeJournal(null);
+  return { loop: raw ?? null, conflict: false };
 }
