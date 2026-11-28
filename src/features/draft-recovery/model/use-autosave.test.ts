@@ -22,10 +22,13 @@ describe('autosave lifecycle', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(150);
     });
-    expect(saveDraft).toHaveBeenCalledExactlyOnceWith({
-      ...draft,
-      pattern: { ...draft.pattern, tempo: 120 },
-    });
+    expect(saveDraft).toHaveBeenCalledExactlyOnceWith(
+      {
+        ...draft,
+        pattern: { ...draft.pattern, tempo: 120 },
+      },
+      null,
+    );
     await act(async () => {
       result.current.flush({ ...draft, view: { ...defaultView, position: 120 } });
     });

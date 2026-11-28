@@ -2,13 +2,6 @@ import { BAR_TICKS, eventId, type Pattern, type Instrument } from '../../../enti
 import { FILL_CATALOG } from './catalog-data';
 import { validateRange, type Fill, type FillRange } from './fills';
 export { FILL_CATALOG } from './catalog-data';
-export const GENRES = {
-  rock: 'Рок',
-  metal: 'Металл',
-  pop: 'Поп',
-  funk: 'Фанк',
-  jazz: 'Джаз',
-} as const;
 export function catalogFill(
   pattern: Pattern,
   bar: number,
